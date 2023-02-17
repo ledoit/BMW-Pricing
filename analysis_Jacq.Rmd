@@ -20,7 +20,6 @@ summary(bmw)
 
 ```{r}
 #Scatterplot price by
-bmw %>% ggplot(aes(x = mileage, y = price)) + geom_point(size = 0.2, alpha =0.2) + geom_sm
-2ooth(method =
+bmw %>% ggplot(aes(x = mileage, y = price)) + geom_point(size = 0.2, alpha =0.2) + geom_sm2ooth(method =
 ```
 
