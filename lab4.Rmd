@@ -1,0 +1,61 @@
+---
+title: "MA575 Lab"
+author: "Henry Bayly"
+date: "2023-02-12"
+output: pdf_document
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(kableExtra)
+library(knitr)
+library(car)
+library(ggplot2)
+library(hrbrthemes)
+library(GGally)
+library(dplyr)
+library(tidyverse)
+library(lubridate)
+
+#Replace filepath
+data <- read.csv("/Users/henry/Desktop/MA575 Lab/bmwData.csv",header=TRUE)
+#Examine contents
+head(data)
+#Check for missingness in the data
+#Should all be false
+table(is.na(data$sold_at))
+table(is.na(data$registration_date))
+#Creating the age variable
+#Diff is in days - divide by 365 to find number of years
+data$age <- as.numeric(difftime(as.Date(data$sold_at,"%m/%d/%Y"),as.Date(data$registration_date,"%m/%d/%Y"))/365)
+#Examine new variable
+summary(data$age)
+#Report summary
+```
+
+We will build a linear model predicting the price of each BMW as a function of the age of the car. To do this we will first take the difference between the registration date and sale date of the car. After finding the difference in days, we divide by 365 to get the age in years (as a decimal). Below is a summary of the ages of our cars. 
+```{r,echo=FALSE,fig.align = 'center'}
+ageSummary <- summary(data$age)
+kable(x = as.array(ageSummary),col.names=c('Measure','Value'))
+```
+Let's plot the data to understand the relationship.
+```{r,echo=FALSE,fig.align = 'center'}
+ggplot(data, aes(x=age, y=price)) + geom_point(size = 0.1)+ggtitle("Age vs Price")
+```
+It is difficult to say whether or not there is a significant linear trend in the data. However, generally as the age of the car increases the plot shows that the price of the car decreases. There seem to be a couple outliers that are around 5 years old but sold for an unusual amount of money. Further inspection will be done later to see if these points should be removed. 
+
+Now we will create a linear model of the form Price = $\beta_0 + age*\beta_1$
+```{r,echo=FALSE,fig.align = 'center'}
+model1 <- lm(price~age,data=data)
+summary(model1)
+```
+
+Our model shows that age is a significant linear predictor of age (p < 2.2$e^{-16}$, F = 1196, df = (1,4841)). Ourregression coefficient for age is -1615.23 (SE = 46.71,t=-34.58,p<2$e^{-16}$). This means that for every 1 year increase in the age of the car we would predict the price of the car to drop by about 1,600 dollars. Our model had an adjusted $R^2$ of 0.1979. This means that, when accounting for the number of predictors, age captures about 19.79% of the variability in price. 
+
+Let's overlay the regression line onto the scatterplot to see how it fits the data. 
+```{r,echo=FALSE,fig.align = 'center'}
+ggplot(data, aes(x=age, y=price)) + geom_point(size = 0.1)+
+geom_abline(slope=as.numeric(model1$coefficients[2]),intercept=as.numeric(model1$coefficients[1]),colour='red')+ggtitle('Age vs Price (regression line overlayed)')
+```
+While the model seems to capture the general trend of the data, we can see a good amount of variability on both sides of the line. This indicates that there could be some aspect of the relationship missing from our model. Since this is only a univariate analysis, multiple regression models will be built later to investigate this. 
