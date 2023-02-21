@@ -10,8 +10,9 @@ library(tidyverse)
 library(ggplot2)
 library(hrbrthemes)
 library(GGally)
-bmw <- as_tibble(read.csv("~/Desktop/MA_575/Project/bmw_pricing_challenge.csv", header=TRUE))
-summary(bmw)
+#bmw <- as_tibble(read.csv("~/Desktop/MA_575/Project/bmw_pricing_challenge.csv", header=TRUE))
+bmw <- read.csv("BMWpricing.csv")
+#summary(bmw)
 ```
 
 ```{r}
@@ -25,10 +26,10 @@ bmw2 %>% ggplot(aes(mileage, price)) + geom_point(size = 0.2, alpha = 0.2) + geo
 
 ```{r}
 bmw_ols <- lm(price~mileage, data = bmw)
-summary(bmw_ols)
+#summary(bmw_ols)
 
 bmw2_ols <- lm(price~mileage, data = bmw2)
-summary(bmw2_ols)
+#summary(bmw2_ols)
 ```
 ```{r}
 #standard residuals
