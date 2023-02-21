@@ -58,4 +58,4 @@ Let's overlay the regression line onto the scatterplot to see how it fits the da
 ggplot(data, aes(x=age, y=price)) + geom_point(size = 0.1)+
 geom_abline(slope=as.numeric(model1$coefficients[2]),intercept=as.numeric(model1$coefficients[1]),colour='red')+ggtitle('Age vs Price (regression line overlayed)')
 ```
-While the model seems to capture the general trend of the data, we can see a good amount of variability on both sides of the line. This indicates that there could be some aspect of the relationship missing from our model. Since this is only a univariate analysis, multiple regression models will be built later to investigate this. 
+While the model seems to capture the general trend of the data, we can see a good amount of variability on both sides of the line. We also see that the variability on each side of the regression line decreases as the age increases. This indicates that there could be some aspect of the relationship missing from our model. Since this is only a univariate analysis, multiple regression models will be built later to investigate this. 

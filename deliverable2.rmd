@@ -1,0 +1,116 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+# Deliverable 2
+
+##### Team Members: Henry Bayly\|Jacqueline Lin\|Jiasong Huang\|Maysen Pagan\|Peiqi Lu\|Phil Ledoit
+
+##### Lab session: C2
+
+```{r setup, message=FALSE, echo=FALSE}
+# Load visualization packages
+library(tidyverse)
+library(ggplot2)
+library(hrbrthemes)
+library(GGally)
+#library(gridExtra)
+library(paletteer)
+```
+
+We selected the **price** of every sold car as the response variable (Y) and the **mileage** of the car at the time of sale as the co-variate (X). Therefore our regression model was of the form
+$$\text{Price} = \beta_0 + \beta_1\text{ Mileage} + \epsilon$$
+**We hypothesize that there exists a negative correlation between the price of a car and its mileage at the time of sale.**
+Typically, cars with lower mileage tend to be more valuable since they have undergone less wear and tear, potentially making them more dependable and long-lasting, albeit more costly. Conversely, cars with higher mileage usually command a lower price due to their greater likelihood of requiring frequent repairs and maintenance, leading to increased ownership expenses, hence cheaper than those with lower mileage.
+
+### Data Loading
+
+```{r,data loading}
+bmw <- read.csv("/Users/henry/Desktop/MA575 Lab/bmwData.csv",header=TRUE)
+head(bmw)
+```
+
+### Original Scatter-plot
+
+```{r,warning=FALSE}
+#price to mileage
+ggplot(bmw, aes(x = mileage, y = price,color=price)) + 
+    xlim(0,500000) +
+    ylim(0,100000) +
+    geom_point(size = 0.2, alpha =0.2) + 
+    ylab("Price") + 
+    xlab("Mileage") + 
+    labs(color = "Price") + 
+    labs(title = "Original Scatter-plot Price~Mileage")
+```
+
+The scatter plot shows about what we would expect. There are several cars with low mileage that have high prices. Moreover, there seems to be a negative linear trend in the data. That is, generally, price goes down as mileage goes up. 
+
+### OLS Performance
+
+```{r}
+#std residuals
+bmw.lm <- lm(price~mileage, data = bmw)
+bmw_stdres <- rstandard(bmw.lm)
+summary(bmw.lm)
+```
+
+#### Regression Interpretation
+
+Recall we built a model of the form $\text{Price} = \beta_0 + \beta_1\text{ Mileage} + \epsilon$. Simple linear regression revealed a statistically significant linear relationship between price and mileage (p < $2e^{-16}$, F = 975.1, df = 1 and 4841, $R^2 = 0.1677$). Our model had an $R^2$ of 0.1677. This means that 16.77% of the variation in price can be explained by mileage. Our beta estimate for mileage was $\beta_1 = -0.06273$ (p < $2e^{-16}$, SE = 0.002, t = -31.24). Therefore, mileage is a statistically significant predictor of price at the $\alpha = 0.05$ level. A beta estimate of -0.06273 means that for every additional mile to a cars mileage, our model predicts a **reduction** in price of 0.06273 dollars. Although mileage is a significant predictor, further analysis should be done to see if the inclusion of other excoriates will increase the variability in price captured by the model. 
+
+<!-- Our model indicates that mileage is a significant factor in determining the price of a car, with a p-value of less than 2.2e-16 and an F-statistic of 980 on 1 and 4841 degrees of freedom. The linear regression model predicts that Price = 24670 - 0.06273\*Mileage, indicating that there is a negative correlation between price and mileage. This means that for every 1-mile increase in mileage, the price of the car decreases by 0.06273 dollars at the time of sale. Mileage has a p-value smaller than 2e-16, which indicates that it is a significant indicator of price. However, the model's adjusted R-squared value of 0.1682 suggests that only 16.82% of the variability in price can be explained by mileage. Mileage is a significant indicator of the price of the car, but it might not be the only indicator. -->
+
+### **Standardized Residuals Plot**
+
+```{r}
+ggplot(bmw, aes(x = mileage, y = bmw_stdres,color=bmw_stdres)) + 
+  xlim(0,500000) +
+  ylim(-10,10) +
+  geom_point(size = 0.2, alpha =0.2) + 
+  labs(title = "BMW Prices",color = "std. RSS") +
+  ylab("Standardized Residuals") + xlab("Mileage") + 
+  geom_hline(yintercept=0, color = "blue") 
+```
+
+#### Standardized Residual Plot Interpretation
+
+In order to assess the performance of the model, we plotted the standardized residuals versus the mileage. We see lots of dispersion and variation in the portion of the graph with low mileage. As mileage increases, the standardized residuals seem to also decrease. This would suggest that the assumption of constant variance might have been violated. Moreover, there seem to be some outliers present in the data that could be affecting the model's performance. We see high values for some residuals (greater than 4). Therefore, further investigation should be done to understand the impact of these outliers on the model and whether their inclusion should be kept. 
+
+<!-- Based on the Standardized Residuals Plot, we can clearly see that the model assumptions of constant variance may not hold but rather decreases when Mileage increases and there are several outliers. So, our model is not a good model for predicting the price of a car at the time of sale. -->
+
+### **Normal Q-Q Plot**
+
+```{r}
+ qqnorm(bmw$mileage, pch = 1, frame = FALSE)
+ qqline(bmw$mileage, col = "steelblue", lwd = 2)
+```
+
+#### Q-Q Plot Interpretation
+Based on the plot, we see that at the tail ends our data deviates from the straight line. While the overall matching to the line isn't bad, this plot seems to indicate the data could be coming from different distributions. Because the tail ends are slightly above the line, we may have a right-skew in the data. 
+
+
+<!-- Based on the Normal Q-Q Plot, we can see that the data deviates for the straight line at the ends of the line, making the data not forming a rough staright line. This also indicates that our model is not a good model. -->
+
+### Scatter-plot with Regression Line Overlayed
+
+```{r,warning=FALSE}
+#price to mileage
+ggplot(bmw, aes(x = mileage, y = price,color=price)) + 
+    xlim(0,500000) +
+    ylim(0,100000) +
+    geom_point(size = 0.2, alpha =0.2) + 
+    geom_smooth(method = "lm", formula = y~x, size = 0.5, se = FALSE) +
+    ylab("Price") + 
+    xlab("Mileage") + 
+    labs(color = "Price") + 
+    labs(title = "Original Scatter-plot Price~Mileage")
+```
+
+#### Interpretation
+
+This plot confirms our previous thoughts on this simple linear regression model. While the general trend seems to be captured, the variance in the residuals decreases for large mileages. 
+
+#### Next Steps
+There are a number of things to be done for here. Although our model was significant, we ideally would want a higher amount of variability to be captured in the model. Before that, though, we should examine the presence of outliers in our dataset and make note of them. This could be done using Cook's distance and residuals. From there, some data points could be removed. After this, we will attempt to incorporate more predictors into our model to see if price can be better predicted from some combination of covariates as opposed to just one.
