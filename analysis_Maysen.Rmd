@@ -1,0 +1,46 @@
+---
+title: "Lab_Project"
+author: "Maysen Pagan"
+date: "2023-02-10"
+output: pdf_document
+---
+
+```{r}
+library(tidyverse)
+library(ggplot2)
+library(hrbrthemes)
+library(GGally)
+#bmw <- as_tibble(read.csv("~/Desktop/MA_575/Project/bmw_pricing_challenge.csv", header=TRUE))
+bmw <- read.csv("BMWpricing.csv")
+#summary(bmw)
+```
+
+```{r}
+#Scatterplot price by 
+bmw %>% ggplot(aes(x = mileage, y = price)) + geom_point(size = 0.2, alpha =0.2) + geom_smooth(method = "lm", formula = y~x, size = 0.5, se = FALSE)
+
+bmw2 <- bmw %>% filter(mileage<500000)
+bmw2 %>% ggplot(aes(mileage, price)) + geom_point(size = 0.2, alpha = 0.2) + geom_smooth(method = "lm", se=FALSE, formula = y~x)
+
+```
+
+```{r}
+bmw_ols <- lm(price~mileage, data = bmw)
+#summary(bmw_ols)
+
+bmw2_ols <- lm(price~mileage, data = bmw2)
+#summary(bmw2_ols)
+```
+```{r}
+#standard residuals
+bmw_stdres <- rstandard(bmw_ols)
+plot(bmw$mileage, bmw_stdres, 
+     ylab="Standardized Residuals", 
+     xlab="Mileage", 
+     main="BMW Prices",)
+abline(0, 0)
+
+qqnorm(bmw$mileage, pch = 1, frame = FALSE)
+qqline(bmw$mileage, col = "steelblue", lwd = 2)
+
+```

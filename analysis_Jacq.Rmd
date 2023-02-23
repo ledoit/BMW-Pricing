@@ -1,0 +1,53 @@
+---
+title: "deliverable02"
+author: "Jacqueline"
+date: "2023-02-17"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(ggplot2)
+library(hrbrthemes)
+library(GGally)
+library(gridExtra)
+library(paletteer)
+```
+
+Loading the data
+
+```{r}
+bmw <- read.csv("BMWpricing.csv")
+bmw$registration_date <- as.Date(bmw$registration_date, "%m/%d/%Y")
+bmw$sold_at <- as.Date(bmw$sold_at, "%m/%d/%Y")
+bmw$period <- bmw$sold_at - bmw$registration_date
+bmw <- select(bmw, -registration_date,-sold_at)
+bmw
+```
+
+numeric columns: ``` bmw\$mileage``bmw$engine_power``bmw$price ``` categorical columns: ``` bmw$model_key``bmw$fuel``bmw$paint_color``bmw$car_type ```
+
+```{r,mileage}
+
+suppressWarnings({
+
+#price to mileage
+p1 <- ggplot(bmw, aes(x = mileage, y = price,color=price)) + geom_point(size = 0.2, alpha =0.2) + geom_smooth(method = "lm", formula = y~x, size = 0.5, se = FALSE) +ylab("Price") + xlab("Mileage") + labs(color = "Price")
+#std residuals
+bmw_ols <- lm(price~mileage, data = bmw)
+bmw_stdres <- rstandard(bmw_ols)
+p2 <- ggplot(bmw, aes(x = mileage, y = bmw_stdres,color=bmw_stdres)) + geom_point(size = 0.2, alpha =0.2) + labs(title = "BMW Prices",color = "std. RSS") +ylab("Standardized Residuals") + xlab("Mileage") + geom_hline(yintercept=0, color = "blue")
+
+grid.arrange(p1,p2)
+
+})
+```
+
+```{r,mileage w/o outlier}
+bmw2 <- bmw %>% filter(mileage<500000)
+bmw2 %>% ggplot(aes(mileage, price)) + geom_point(size = 0.2, alpha = 0.2) + geom_smooth(method = "lm", se=FALSE, formula = y~x)
+
+bmw2_ols <- lm(price~mileage, data = bmw2)
+```
+
