@@ -1,0 +1,64 @@
+---
+title: "Deliverable3"
+author: "Maysen Pagan"
+date: "2023-02-24"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(hrbrthemes)
+library(GGally)
+bmw <- as_tibble(read.csv("~/Desktop/MA_575/Project/BMWpricing.csv", comment.char="#")) %>% 
+  select(-maker_key)
+```
+
+```{r cleaning}
+#remove mileage greater than 1,000,000  and less than 0
+bmw_clean <- bmw %>% filter(mileage<500000 & mileage > 0)
+#change true/false in features to 0/1
+bmw_clean$feature_1 <- as.integer(as.logical(bmw_clean$feature_1))
+bmw_clean$feature_2 <- as.integer(as.logical(bmw_clean$feature_2))
+bmw_clean$feature_3 <- as.integer(as.logical(bmw_clean$feature_3))
+bmw_clean$feature_4 <- as.integer(as.logical(bmw_clean$feature_4))
+bmw_clean$feature_5 <- as.integer(as.logical(bmw_clean$feature_5))
+bmw_clean$feature_6 <- as.integer(as.logical(bmw_clean$feature_6))
+bmw_clean$feature_7 <- as.integer(as.logical(bmw_clean$feature_7))
+bmw_clean$feature_8 <- as.integer(as.logical(bmw_clean$feature_8))
+#separate registration date column into month, day, and year
+bmw_clean[c('month', 'day', 'year')] <- str_split_fixed(bmw_clean$registration_date, '/', 3)
+#create column "model_letter" containing letter of model_key (if it exists, "none" otherwise)
+bmw_clean <- bmw_clean %>% mutate(model_letter = str_extract(bmw_clean$model_key, "^[A-Za-z]"))
+bmw_clean$model_letter <- replace_na(bmw_clean$model_letter, "none")
+```
+
+```{r stepwise}
+library(leaps)
+fwd <- leaps::regsubsets(price ~ mileage + engine_power + feature_1 + feature_2 + feature_3 + feature_4 + feature_5 + feature_6 + feature_7 + feature_8, 
+                         data = bmw_clean, 
+                         method = "forward",
+                         nvmax = 10)
+summary(fwd)$which
+(b <- which.min(summary(fwd)$cp))
+# b = 8, so model with 8 variables has lowest Mallow's CP and is therefore the best model
+#best model according to to CP and forward selection
+colnames(summary(fwd)$which)[summary(fwd)$which[b,]]
+#best overall model
+model <- (lm(price ~ mileage + engine_power + feature_1 + feature_2 + feature_3 + feature_4 + feature_6 + feature_8, bmw_clean))
+summary(model)
+```
+```{r diagnostics}
+par(mfrow = c(2,2))
+plot(model)
+```
+
+
+
+``` {r scatterplot}
+attach(bmw_clean)
+data <- data.frame(price, mileage, engine_power, feature_1, feature_2, feature_3, feature_4, feature_6, feature_8)
+ggpairs(data, upper = list(continuous = wrap("points", alpha = 0.3,    size=0.1)),
+lower = list(continuous = wrap('cor', size = 4)))
+detach(bmw_clean)
+```
