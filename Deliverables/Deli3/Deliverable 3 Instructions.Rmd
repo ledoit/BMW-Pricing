@@ -1,0 +1,20 @@
+You have a deliverable, “Multiple Linear Regression”, Lab Report #3, due
+Monday March 20, 2023, at 12:05 pm (sharp this time!). From your chosen
+project data set (either bike rentals or used BMWs), please submit:
+
+
+1. Choose the response variable (Y) and initial candidate covariates (X1,X2,
+..Xp). Please put some thought for your response and covariates variable
+selection and elaborate.
+
+2. Create a scatter plot matrix of (Y,X1,X2, ..,Xp) and correlation matrix.
+Propose a new set of covariates (X1,X2, ..,Xr) from (X1,X2, ..,Xp), where r <= p.
+Please explain your choice. Why would this be a better choice of variables?
+
+3. Perform MLR using R on your response (Y) and covariates (X1,X2, ..,,Xr).
+
+4. Please submit the output from R of MLR (coefficient estimate, t values, p
+values) and interpret the results.
+
+5. Plot the standardized residuals of your model. Is this a good model?
+Please elaborate.
