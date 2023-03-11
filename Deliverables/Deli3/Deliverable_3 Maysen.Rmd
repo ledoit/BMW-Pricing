@@ -20,8 +20,7 @@ library(leaps)
 library(caret)
 library(MASS)
 
-bmw <- as_tibble(read.csv("~/Desktop/MA_575/Project/BMWpricing.csv", comment.char="#")) %>% 
-  select(-maker_key)
+bmw <- as_tibble(read.csv("~/Desktop/MA_575/Project/BMWpricing.csv", comment.char="#")) 
 ```
 
 ```{r cleaning}
@@ -48,13 +47,17 @@ bmw_clean$age <- as.numeric(difftime(as.Date(bmw_clean$sold_at,"%m/%d/%Y"),as.Da
 # define common/uncommon colors
 common_color <- c("black","grey","white","silver")
 uncommon_color <-c("red", "blue","orange","beige","brown","green")
+new_energy <- c("hybrid_petrol", "electro")
+not_new_energy <- c("diesel", "petrol")
 bmw_clean <- bmw_clean %>%
   #create dummy columns
   mutate(test1 = 1, test2 = 1, test3 = 1, test4 = 1) %>%  
   #determine common color 
   mutate(is_common_color = sapply(bmw_clean$paint_color, function(x) x %in% common_color )) %>%
+  #determine electric 
+  mutate(is_new_energy = sapply(bmw_clean$fuel, function(x) x %in% new_energy )) %>%
   # extract model series 
-  mutate(model_letter = substr(model_key, 1,1))
+  mutate(model_series = substr(model_key, 1,1))
 
 #turn logical into numeric 
 bmw_clean$feature_1 <- as.numeric(bmw_clean$feature_1)
@@ -66,29 +69,65 @@ bmw_clean$feature_6 <- as.numeric(bmw_clean$feature_6)
 bmw_clean$feature_7 <- as.numeric(bmw_clean$feature_7)
 bmw_clean$feature_8 <- as.numeric(bmw_clean$feature_8)
 bmw_clean$is_common_color <- as.numeric(bmw_clean$is_common_color)
+bmw_clean$is_new_energy <- as.numeric(bmw_clean$is_new_energy)
 
 #pivot the categorical values
 bmw_clean <- bmw_clean %>% 
   pivot_wider(names_from = paint_color, values_from = test1,values_fill = 0 ) %>% 
   pivot_wider(names_from = fuel, values_from = test2, values_fill = 0 ) %>%
-  pivot_wider(names_from = car_type, values_from = test3, values_fill = 0 ) %>%
-  pivot_wider(names_from = model_letter, values_from = test4, values_fill = 0 )
+  pivot_wider(names_from = car_type, values_from = test3, values_fill = 0 ) 
+# pivot_wider(names_from = model_letter, values_from = test4, values_fill = 0 )
 ```
+
+```{r model_series_dummy}
+
+#create dummy variables
+`1` <- ifelse(bmw_clean$model_series == 1, 1, 0)
+M <- ifelse(bmw_clean$model_series == 'M', 1, 0)
+`4` <- ifelse(bmw_clean$model_series == 4, 1, 0)
+Z <- ifelse(bmw_clean$model_series == 'Z', 1, 0)
+`2` <- ifelse(bmw_clean$model_series == 2, 1, 0)
+`6` <- ifelse(bmw_clean$model_series == 6, 1, 0)
+i <- ifelse(bmw_clean$model_series == 'i', 1, 0)
+`5` <- ifelse(bmw_clean$model_series == 5, 1, 0)
+X <- ifelse(bmw_clean$model_series == 'X', 1, 0)
+`7` <- ifelse(bmw_clean$model_series == 7, 1, 0)
+
+#add columnns to bmw_clean data set
+bmw_clean$`1` = `1`
+bmw_clean$M = M
+bmw_clean$`4` = `4`
+bmw_clean$Z = Z
+bmw_clean$`2` = `2`
+bmw_clean$`6` = `6`
+bmw_clean$i = i
+bmw_clean$`5` = `5`
+bmw_clean$X = X
+bmw_clean$`7` = `7`
+
+```
+
 
 2.
 ``` {r scatterplot}
-attach(bmw_clean)
-data <- data.frame(price, mileage, engine_power, age, diesel, petrol, hybrid_petrol, M, Z, X, i, is_common_color)
-ggpairs(data, upper = list(continuous = wrap("points", alpha = 0.3,    size=0.1)),
-lower = list(continuous = wrap('cor', size = 4)))
-detach(bmw_clean)
+#copy of bmw_clean
+bmw_scatterplot <- bmw_clean
+#change is_new_energy and is_common_color to categorical variables
+bmw_scatterplot$is_new_energy <- as.factor(bmw_scatterplot$is_new_energy)
+bmw_scatterplot$is_common_color <- as.factor(bmw_scatterplot$is_common_color)
+attach(bmw_scatterplot)
+
+data <- data.frame(price, mileage, engine_power, age, is_new_energy, is_common_color)
+ggpairs(data, upper = list(continuous = wrap("points", alpha = 0.3, size=0.1), combo = "box_no_facet"),
+        lower = list(continuous = wrap('cor', size = 4)))
+detach(bmw_scatterplot)
 ```
 
 
 ```{r stepwise_AIC}
 library(leaps)
 #full model
-full_mod <- lm(price ~ mileage + engine_power + age + diesel + petrol + hybrid_petrol + M + Z + X + i + is_common_color, data = bmw_clean)
+full_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color, data = bmw_clean)
 
 #best model using stepwise AIC
 best_mod <- stepAIC(full_mod, direction = "both", trace = FALSE)
@@ -100,29 +139,29 @@ broom::glance(full_mod)
 ```
 
 ```{r stepwise_Mallows}
-fwd <- leaps::regsubsets(price ~ mileage + engine_power + age + diesel + petrol + hybrid_petrol + M + Z + X + i + is_common_color, 
+fwd <- leaps::regsubsets(price ~ mileage + engine_power + age + is_new_energy + is_common_color, 
                          data = bmw_clean, 
                          method = "forward",
-                         nvmax = 12)
+                         nvmax = 5)
 summary(fwd)$which
 (b <- which.min(summary(fwd)$cp))
 # b = 8, so a model with 8 variables has lowest Mallow's CP and is therefore the best model
 #best model according to to CP and forward selection
 colnames(summary(fwd)$which)[summary(fwd)$which[b,]]
 #best overall model confirms that best model from stepwise AIC is correct
-best_model <- (lm(price ~ mileage + engine_power + age + diesel + petrol + hybrid_petrol + X + i, bmw_clean))
+best_model <- (lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color, bmw_clean))
 summary(best_model)
 ```
 
 ```{r Mallows_plot}
 cp <- as_tibble(matrix(summary(fwd)$cp))
-predictors <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+predictors <- c(1, 2, 3, 4, 5)
 cp %>% add_column(predictors = predictors)
 
 #bar graph
 cp %>% ggplot(aes(x = predictors, y = V1)) + 
   geom_bar(stat = "identity", color = "#1974D2", fill = "white") + 
-  scale_x_continuous(n.breaks = 10) +
+  scale_x_continuous(n.breaks = 5) +
   geom_text(aes(label = round(V1,2)), vjust = -0.25) +
   labs(x = "Number of Predictors", y = "Mallow's CP")
 
@@ -137,6 +176,8 @@ cp %>% ggplot(aes(x = predictors, y = V1)) +
 summary(best_mod)
 ```
 
+
+5.
 ```{r standard_resid}
 #add fitted values column to data set
 bmw_fitted <- cbind(bmw_clean, fitted = fitted(best_model))
@@ -149,9 +190,6 @@ abline(0, 0)
 abline(2, 0)
 abline(-2, 0)
 ```
-
-
-
 
 
 
