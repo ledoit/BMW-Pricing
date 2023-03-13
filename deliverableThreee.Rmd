@@ -1,0 +1,309 @@
+---
+output: pdf_document
+---
+# Deliverable 3
+  
+##### Team Members: Henry Bayly\|Jacqueline Lin\|Jiasong Huang\|Maysen Pagan\|Peiqi Lu\|Phil Ledoit
+
+##### Group Number 1
+  
+##### Lab session: C2
+
+### Introduction
+
+
+The dataset that we are examining comprises of data of 4,843 actual BMW cars that were sold via B2B in 2018. The purpose of analyzing the dataset is to identify the variables that might have influenced the sale price of a car. The possible affecting factors includes model key, mileage, engine power, age and also 8 criteria based on the equipment of car which have been labeled feature_1 to feature_8 in the dataset.
+
+
+In our first lab we built a simple linear model that predicted the price of each BMW from the mileage. Simple linear regression revealed a statistically significant linear relationship between price and mileage. However, regression diagnostics revealed that our model might not be good. Therefore, in this report we addressed some of those issues. Specifically we looked into removing outliers and unrealistic points from the dataset. Moreover, we used an AIC based model selection criteria to perform multiple linear regression. 
+
+
+All source code and figures can be found in the appendix.
+
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(hrbrthemes)
+library(GGally)
+library(kableExtra)
+library(knitr)
+library(car)
+library(dplyr)
+library(lubridate)
+library(AICcmodavg)
+library(leaps)
+library(caret)
+library(MASS)
+library(stargazer)
+library(broom)
+bmw <- as_tibble(read.csv("~/Desktop/MA575_Lab/bmwData.csv", comment.char="#")) %>% 
+  dplyr::select(-maker_key)
+```
+
+### Data Cleaning
+
+
+In this section we discuss relevant ways in which we altered the dataset. When we performed simple linear regression using mileage as a predictor we noticed a few unrealistic points. We defined an 'unrealistic' mileage to be one that either had negative miles or more than 500,000. We removed 2 cars from our data that met this criteria. Therefore, we were left with $N = $4,841 cars. Furthermore, when analyzing the Model Keys we noticed that there was a single car with model type 'ActiveHybrid 5'. Because there was only one car of this type, we removed it from the data set. Thus, our final data comprised of $N = $4,840 cars. 
+
+
+
+```{r cleaning,include=FALSE}
+#remove mileage greater than 1,000,000  and less than 0
+length(bmw$model_key)
+bmw_clean <- bmw %>% filter(mileage<500000 & mileage > 0)
+length(bmw_clean$model_key)
+#remove the only car whose model_key is "ActiveHybrid 5"
+bmw_clean <- bmw_clean %>%  filter(model_key != "ActiveHybrid 5")
+length(bmw_clean$model_key)
+#change true/false in features to 0/1
+bmw_clean$feature_1 <- as.integer(as.logical(bmw_clean$feature_1))
+bmw_clean$feature_2 <- as.integer(as.logical(bmw_clean$feature_2))
+bmw_clean$feature_3 <- as.integer(as.logical(bmw_clean$feature_3))
+bmw_clean$feature_4 <- as.integer(as.logical(bmw_clean$feature_4))
+bmw_clean$feature_5 <- as.integer(as.logical(bmw_clean$feature_5))
+bmw_clean$feature_6 <- as.integer(as.logical(bmw_clean$feature_6))
+bmw_clean$feature_7 <- as.integer(as.logical(bmw_clean$feature_7))
+bmw_clean$feature_8 <- as.integer(as.logical(bmw_clean$feature_8))
+#separate registration date column into month, day, and year
+bmw_clean[c('month', 'day', 'year')] <- str_split_fixed(bmw_clean$registration_date, '/', 3)
+#create column "model_letter" containing letter of model_key (if it exists, "none" otherwise)
+bmw_clean <- bmw_clean %>% mutate(model_letter = str_extract(bmw_clean$model_key, "^[A-Za-z]"))
+bmw_clean$model_letter <- replace_na(bmw_clean$model_letter, "none")
+#add age variable
+bmw_clean$age <- as.numeric(difftime(as.Date(bmw_clean$sold_at,"%m/%d/%Y"),as.Date(bmw_clean$registration_date,"%m/%d/%Y"))/365)
+# define common/uncommon colors
+common_color <- c("black","grey","white","silver")
+uncommon_color <-c("red", "blue","orange","beige","brown","green")
+new_energy <- c("hybrid_petrol", "electro")
+not_new_energy <- c("diesel", "petrol")
+bmw_clean <- bmw_clean %>%
+  #create dummy columns
+  mutate(test1 = 1, test2 = 1, test3 = 1, test4 = 1) %>%  
+  #determine common color 
+  mutate(is_common_color = sapply(bmw_clean$paint_color, function(x) x %in% common_color )) %>%
+  #determine electric 
+  mutate(is_new_energy = sapply(bmw_clean$fuel, function(x) x %in% new_energy )) %>%
+  # extract model series 
+  mutate(model_series = substr(model_key, 1,1))
+#turn logical into numeric 
+bmw_clean$feature_1 <- as.numeric(bmw_clean$feature_1)
+bmw_clean$feature_2 <- as.numeric(bmw_clean$feature_2)
+bmw_clean$feature_3 <- as.numeric(bmw_clean$feature_3)
+bmw_clean$feature_4 <- as.numeric(bmw_clean$feature_4)
+bmw_clean$feature_5 <- as.numeric(bmw_clean$feature_5)
+bmw_clean$feature_6 <- as.numeric(bmw_clean$feature_6)
+bmw_clean$feature_7 <- as.numeric(bmw_clean$feature_7)
+bmw_clean$feature_8 <- as.numeric(bmw_clean$feature_8)
+bmw_clean$is_common_color <- as.numeric(bmw_clean$is_common_color)
+bmw_clean$is_new_energy <- as.numeric(bmw_clean$is_new_energy)
+#pivot the categorical values
+bmw_clean <- bmw_clean %>% 
+  pivot_wider(names_from = paint_color, values_from = test1,values_fill = 0 ) %>% 
+  pivot_wider(names_from = fuel, values_from = test2, values_fill = 0 ) %>%
+  pivot_wider(names_from = car_type, values_from = test3, values_fill = 0 ) 
+# pivot_wider(names_from = model_letter, values_from = test4, values_fill = 0 )
+```
+
+
+```{r model_series_dummy, include=FALSE}
+#create dummy variables
+`1` <- ifelse(bmw_clean$model_series == 1, 1, 0)
+M <- ifelse(bmw_clean$model_series == 'M', 1, 0)
+`4` <- ifelse(bmw_clean$model_series == 4, 1, 0)
+Z <- ifelse(bmw_clean$model_series == 'Z', 1, 0)
+`2` <- ifelse(bmw_clean$model_series == 2, 1, 0)
+`6` <- ifelse(bmw_clean$model_series == 6, 1, 0)
+i <- ifelse(bmw_clean$model_series == 'i', 1, 0)
+`5` <- ifelse(bmw_clean$model_series == 5, 1, 0)
+X <- ifelse(bmw_clean$model_series == 'X', 1, 0)
+`7` <- ifelse(bmw_clean$model_series == 7, 1, 0)
+
+#add columnns to bmw_clean data set
+bmw_clean$`1` = `1`
+bmw_clean$M = M
+bmw_clean$`4` = `4`
+bmw_clean$Z = Z
+bmw_clean$`2` = `2`
+bmw_clean$`6` = `6`
+bmw_clean$i = i
+bmw_clean$`5` = `5`
+bmw_clean$X = X
+bmw_clean$`7` = `7`
+```
+
+### Data Exploration
+
+
+**Need a simpler way to represent this -- it's too big right now and doesn't render well. One idea is to stratify this command into smaller combinations**
+
+``` {r scatterplot, include=FALSE}
+#copy of bmw_clean
+bmw_scatterplot <- bmw_clean
+#change is_new_energy and is_common_color to categorical variables
+bmw_scatterplot$is_new_energy <- as.factor(bmw_scatterplot$is_new_energy)
+bmw_scatterplot$is_common_color <- as.factor(bmw_scatterplot$is_common_color)
+attach(bmw_scatterplot)
+data <- data.frame(price, mileage, engine_power, age, is_new_energy, is_common_color)
+ggpairs(data, upper = list(continuous = wrap("points", alpha = 0.3, size=0.1), combo = "box_no_facet"),
+        lower = list(continuous = wrap('cor', size = 4)))
+detach(bmw_scatterplot)
+```
+
+
+### Variable Inclusion Justifications
+
+
+Before discussing our model selection techniques, we will discuss rationale and hypotheses for inclusion of each variable in the full model. 
+
+
+The first predictor we used was Mileage. Typically, cars with lower mileage tend to be more valuable since they have undergone less wear and tear, potentially making them more dependable and long-lasting, albeit more costly. Conversely, cars with higher mileage usually command a lower price due to their greater likelihood of requiring frequent repairs and maintenance, leading to increased ownership expenses, hence cheaper than those with lower mileage. Thus, we hypothesize that both higher mileage result in the lower sale price of a car.
+
+
+The next predictor we used was the Age of the car. We defined the age of the car as the difference in time between when the car was sold and when it was registered. The age of a used car also has a similar effect on car value as mileage. However, an older car with a low mileage might place the car value in a better position than a newer car with a high mileage. Overall, we hypothesize that older cars will be worth less than newer cars.
+
+
+Furthermore, different fuel types and paint colors have an impact on the sale price of a car. Fuel price is a crucial consideration for consumers when purchasing a vehicle since they are subject to fluctuation, making it challenging to estimate monthly fuel expenses. The average price of petrol per gallon has risen from $\$3.14$ to $\$3.49$ since the beginning of 2022, while diesel has experienced a 38% increase from $\$3.61$ to $\$5.31$ during the same period. The cars in our data set had 4 different fuel types: hybrid, electric, diesel, and petrol. To represent this in our model, we categorized cars as using new energy (hybrid or electric) versus not (diesel or petrol). We hypothesize that cars using new energy will cost more than those that don't use new energy due to the fact that upkeep on the new energy vehicles costs less. As for paint color, we categorized the paint color data into two categories: common colors and less common colors. Common colors, including white, black, gray, and silver, account for 77% of new car colors and typically experience a 15% depreciation rate per year over the first three years of ownership. However, cars with less common paint colors tend to depreciate less, indicating that cars with the common colors listed above are likely to have lower sale prices than those with less common colors.
+
+
+The data contained information on whether or not each car contained certain features. There were 8 features in total. No other information on the actual description of the features was provided. As a result, they were included in the full model. However, as described below, our model selection process informed us on the most relevant features for our model. Therefore, we had no initial rationale or hypotheses about their inclusion in the model but were able to tell through model selection and our model results which features were significant linear predictors of price.
+
+
+The data also contained information about the 'series' of each car. Based on BMW’s criteria for their model series, we categorized the model key data into 11 categories, including 1-7 series, M series, X series, Z series, and i series. Within the 1 to 7 series, we observed that cars with higher model numbers tend to command higher prices. The M series, which represents the highest-performance edition of each series, is the most expensive model. The X series represents a line of SUV vehicles and crossovers(BMW also refers to them as Sports Activity Vehicles). The Z series, which stands for “future” in German, contains models such as roadster, coupé, sports car, and concept variants. The i series models are new energy vehicles(electric vehicles and hybrid vehicles). We hypothesize that M series car will result in the highest sale price since M series models are the highest-performing vehicles, while higher model numbers in each letter series will result in higher sale price of a car. We represented this as a dummy variable in our data. Model series 3 was used as an arbitrary reference category. Because the model series variable had 11 levels, we decided to exclude it from our model selection procedure. The reason for this was because it was likely that certain levels would be excluded while others would not. This creates challenges from an interpretation point of view. We believe that the series of the car is an integral part in determining the value of the car. Therefore, we elected to force its inclusion in the final model. 
+
+
+Last but not least, it is worth noting that higher engine power translates to better acceleration and overall performance of a car. Based on this, we speculate that cars with better performance will command a higher sale price.
+
+
+```{r stepwise_AIC, include=FALSE}
+library(leaps)
+#full model
+full_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 + feature_4 + feature_5 + feature_6 + feature_7 + feature_8, data = bmw_clean)
+#best model using stepwise AIC
+best_mod_aic <- stepAIC(full_mod, direction = "both", trace = FALSE)
+summary(best_mod_aic)
+summary(full_mod)
+#comparing AIC of best model against full model (and other stats)
+broom::glance(best_mod_aic)
+broom::glance(full_mod)
+```
+
+```{r stepwise_Mallows, include=FALSE}
+fwd <- leaps::regsubsets(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 + feature_4 + feature_5 + feature_6 + feature_7 + feature_8, 
+                         data = bmw_clean, 
+                         method = "forward")
+summary(fwd)$which
+(b <- which.min(summary(fwd)$cp))
+# b = 8, so a model with 8 variables has lowest Mallow's CP and is therefore the best model
+#best model according to to CP and forward selection
+colnames(summary(fwd)$which)[summary(fwd)$which[b,]]
+#best overall model confirms that best model from stepwise AIC is correct
+best_model_mallow <- (lm(price ~ mileage + engine_power + age + is_new_energy + feature_1 + feature_3 + feature_4 + feature_8, bmw_clean))
+summary(best_model_mallow)
+```
+
+
+### Model Selection
+
+In order to identify the best model for our data we used an AIC (Akaike Information Criterion) based model selection approach. Recall that AIC is a measure that helps to balance the goodness of fit and complexity of the model. We wanted to capture as much variation in the price of the cars as possible, but wanted to avoid overfitting our model. 
+
+
+After performing our AIC based selection (without the dummy variables for Model Series), we conclude that 11 covariates should be used to predict the price of BMWs in our dataset. Specifically we found that Price should be predicted using: mileage, engine power, age of the car, whether or not they used new energy (as defined before), whether or not they were a common color (as defined before), and whether or not they had features 1,2,3,4,6, and 8. This combination of predictors from our full model resulted in the lowest AIC score, which is ideal. 
+
+
+To cross validate this result we also performed model selection using Mallow's Cp as an indicator of good performance. Recall that Mallow's Cp is similar to AIC but different. The idea of Mallow's Cp is to compare the expected mean square error of multiple candidate models to a 'perfect' model. To utilize this statistic we used forward stepwise selection. 
+
+
+After performing forward stepwise model selection, the use of Mallow's Cp statistic generated a different model. This model had 8 covariates: mileage, engine power, age of the car, whether or not they used new energy (as defined before), and whether or not they had features 1,3,4, and 8. Recall that for a good model Mallow's Cp statistic should be close to the number of predictors in the model. Figure 1 displays a graph of the Mallow Cp score for multiple candidate models. We can see here that the model with 8 predictors has the lowest Cp score. However, the Cp score for the model with 8 predictors is 30.56. While this is the lowest of the candidate models, it is still rather high -- indicating potential bias in the model. 
+
+
+```{r Mallows_plot,echo=FALSE, warning=FALSE, error=FALSE}
+cp <- as_tibble(matrix(summary(fwd)$cp))
+predictors <- c(1, 2, 3, 4, 5,6,7,8)
+cp %>% add_column(predictors = predictors)
+#bar graph
+ggplot(aes(x = predictors, y = V1),data=cp) + 
+  geom_bar(stat = "identity", color = "#1974D2", fill = "white") + 
+  scale_x_continuous(n.breaks = 8) +
+  geom_text(aes(label = round(V1,2)), vjust = -0.25) +
+  labs(x = "Number of Predictors", y = "Mallow's CP")
+#point plot
+#cp %>% ggplot(aes(x = predictors, y = V1)) + 
+#   geom_point() + 
+#   scale_x_continuous(n.breaks = 10) +
+#   geom_text(aes(label = round(V1,2)), vjust = -0.60) +
+#   labs(x = "Number of Predictors", y = "Mallow's CP")
+```
+
+
+\begin{center}
+Figure 1 - Mallow's Cp Statistics For Candidate Models
+\end{center}
+
+### Comparing The Two Previous Models
+
+```{r comparing two models,echo=FALSE,results='asis'}
+stargazer::stargazer(best_mod_aic, best_model_mallow,header=FALSE,type='latex',title = "AIC Selected Model Versus Forward Selection Model",
+  column.labels = c("AIC", "Forward Selection"),dep.var.caption = " ",
+  dep.var.labels = "Overall Price", covariate.labels = c("Mileage (SE)", "Engine Power (SE)", "Age (SE)", "New Energy? (SE)", "Common Color? (SE)", "Feature 1 (SE)", "Feature 2 (SE)", "Feature 3 (SE)", "Feature 4 (SE)", "Feature 6 (SE)", "Feature 8 (SE)"))
+
+```
+
+
+
+Table 1 displays the outputs from our two models selected by an AIC and Mallow's Cp based criteria. Note this does not yet include the dummy variable for Model Series. The purpose of this section is to choose a better candidate model (regression diagnostics and parameter interpretations will be performed on the final model including Model Series later). The AIC based model has an adjusted $R^2$ of 0.651 compared to an $R^2$ of 0.650 for the Mallow's Cp based model. The AIC based model had an F Statistic of 818.700 (df=11,p<2.2$e^{-16}$). The Mallow's based model model had an F Statistic of 1,117.722(df=8,p<2.2$e^{-16}$).
+
+
+Overall both models seem relatively comparable. The AIC model has a slightly larger adjusted $R^2$. Also, looking at the variables excluded in the Mallow's based model, we can see, with the exception of common color, all predictors were found to be significant in the AIC based model. Because of this, we elected to continue forward with the AIC based model. 
+
+\pagebreak
+### Full Model (including Model Series)
+
+
+```{r fullmodel,echo=FALSE}
+final_model <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 + feature_4 + feature_6 + feature_8 + `1` + M + `4`+Z+`2`+`6`+i+`5`+X+`7`, data = bmw_clean)
+#summary(final_model)
+final_model%>% tidy() %>% mutate(
+    term = c("Intercept", "Mileage", "Engine Power", "Age", "New Energy?", "Common Color?", "Feature 1", "Feature 2", "Feature 3", "Feature 4", "Feature 6", "Feature 8", "Model Series 1","Model Series M","Model Series 4","Model Series Z","Model Series 2","Model Series 6","Model Series i","Model Series 5","Model Series X","Model Series 7")
+  ) %>% kable(caption = "Coefficient-Level Estimates For Full Model",
+    col.names = c("Predictor", "Beta", "SE", "t", "p"),
+    digits = c(0, 2, 3, 2, 5)) %>% kable_styling(latex_options = "striped")
+
+```
+
+
+Multiple linear regression was performed using the model parameters in Table 2 to predict the price of each car. Our model revealed a statistically significant linear association between the predictors in Table 2 and price (F = 473.1, df = 21 and 4,818, p < 2$e^{-16}$). Our model had an adjusted $R^2$ of 0.672. This means that, when adjusting for the number of predictors, our model captures about 67.2% of the variation in price. 
+
+
+**Insert interpretations for beta estimates -- also note that these are only valid if our model assumptions are met, these will be examined in the next section**
+
+
+### Model Performance
+
+
+```{r standard_resid,echo=FALSE}
+#add fitted values column to data set
+bmw_fitted <- cbind(bmw_clean, fitted = fitted(final_model))
+standard_res <- rstandard(final_model)
+plot(bmw_fitted$fitted, standard_res, 
+     ylab="Standardized Residuals", 
+     xlab="Fitted Values") 
+abline(0, 0) 
+abline(2, 0)
+abline(-2, 0)
+```
+\begin{center}
+Figure 2 - Standardized Residuals vs Fitted Values
+\end{center}
+
+**Add in interpretation here**
+
+
+### Conclusions
+
+
+### Next Steps
+
+
+
+### Appendix
