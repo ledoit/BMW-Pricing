@@ -19,6 +19,8 @@ library(AICcmodavg)
 library(leaps)
 library(caret)
 library(MASS)
+library(olsrr)
+library(modelsummary)
 
 bmw <- as_tibble(read.csv("~/Desktop/MA_575/Project/BMWpricing.csv", comment.char="#")) 
 ```
@@ -133,9 +135,31 @@ full_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_
 best_mod <- stepAIC(full_mod, direction = "both", trace = FALSE)
 summary(best_mod)
 
-#comparing AIC of best model against full model (and other stats)
-broom::glance(best_mod)
-broom::glance(full_mod)
+#comparing AIC of all models
+aic <- ols_step_both_aic(full_mod)
+plot(aic)
+
+#alternative graph
+#all possible models in forward selection
+four_mod <- lm(price ~ mileage + engine_power + age + is_new_energy, data = bmw_clean)
+three_mod <- lm(price ~ mileage + engine_power + age, data = bmw_clean)
+two_mod <- lm(price ~ mileage + engine_power, data = bmw_clean)
+one_mod <- lm(price ~ mileage, data = bmw_clean)
+AIC(full_mod)
+AIC(four_mod)
+AIC(three_mod)
+AIC(two_mod)
+AIC(one_mod)
+
+models <- list(
+  "Five Predictors" = lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color, data = bmw_clean),
+  "Four Predictors" = lm(price ~ mileage + engine_power + age + is_new_energy, data = bmw_clean),
+  "Three Predictors" = lm(price ~ mileage + engine_power + age, data = bmw_clean),
+  "Two Predictors" = lm(price ~ mileage + engine_power, data = bmw_clean),
+  "One Predictors" = lm(price ~ mileage, data = bmw_clean)
+)
+
+modelsummary(models, output = "kableExtra")
 ```
 
 ```{r stepwise_Mallows}
@@ -154,23 +178,17 @@ summary(best_model)
 ```
 
 ```{r Mallows_plot}
-cp <- as_tibble(matrix(summary(fwd)$cp))
+
 predictors <- c(1, 2, 3, 4, 5)
-cp %>% add_column(predictors = predictors)
 
 #bar graph
-cp %>% ggplot(aes(x = predictors, y = V1)) + 
+cp %>% ggplot(aes(x = predictors, y = summary(fwd)$cp)) + 
   geom_bar(stat = "identity", color = "#1974D2", fill = "white") + 
   scale_x_continuous(n.breaks = 5) +
   geom_text(aes(label = round(V1,2)), vjust = -0.25) +
-  labs(x = "Number of Predictors", y = "Mallow's CP")
+  labs(title = "Mallow's CP for Each Stepwise Model", x = "Number of Predictors", y = "Mallow's CP")
 
-#point plot
-#cp %>% ggplot(aes(x = predictors, y = V1)) + 
-#   geom_point() + 
-#   scale_x_continuous(n.breaks = 10) +
-#   geom_text(aes(label = round(V1,2)), vjust = -0.60) +
-#   labs(x = "Number of Predictors", y = "Mallow's CP")
+
 ```
 ```{r MLR}
 summary(best_mod)
@@ -179,16 +197,28 @@ summary(best_mod)
 
 5.
 ```{r standard_resid}
+#standard residuals
+bmw.lm <- lm(price~mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 + feature_4 + feature_6 + feature_8, data = bmw_clean)
+bmw_stdres <- rstandard(bmw.lm)
 #add fitted values column to data set
-bmw_fitted <- cbind(bmw_clean, fitted = fitted(best_model))
+bmw_fitted <- cbind(bmw_clean, fitted = fitted(bmw.lm))
+#standard residuals plot
+ggplot(bmw_fitted, aes(x = fitted, y = bmw_stdres, color=bmw_stdres)) + 
+  geom_point(size = 0.2, alpha =0.2) + 
+  labs(title = "BMW Prices",color = "Standard RSS") +
+  ylab("Standardized Residuals") + xlab("Fitted Values") + 
+  geom_hline(yintercept=0, color = "blue") 
 
-standard_res <- rstandard(best_model)
-plot(bmw_fitted$fitted, standard_res, 
-     ylab="Standardized Residuals", 
-     xlab="Fitted Values") 
-abline(0, 0) 
-abline(2, 0)
-abline(-2, 0)
+#residuals
+bmw_res <- resid(bmw.lm)
+#residuals vs fitted plot
+ggplot(bmw_fitted, aes(x = fitted, y = bmw_res, color=bmw_res)) + 
+  geom_point(size = 0.2, alpha =0.2) + 
+  labs(title = "BMW Prices",color = "RSS") +
+  ylab("Residuals") + xlab("Fitted Values") + 
+  geom_hline(yintercept=0, color = "blue")
+
+#standard residual plot and residual plot vs fitted are both the same
 ```
 
 
