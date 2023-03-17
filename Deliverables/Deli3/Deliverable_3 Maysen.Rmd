@@ -111,20 +111,30 @@ bmw_clean$`7` = `7`
 
 
 2.
-``` {r scatterplot}
-#copy of bmw_clean
-bmw_scatterplot <- bmw_clean
-#change is_new_energy and is_common_color to categorical variables
-bmw_scatterplot$is_new_energy <- as.factor(bmw_scatterplot$is_new_energy)
-bmw_scatterplot$is_common_color <- as.factor(bmw_scatterplot$is_common_color)
-attach(bmw_scatterplot)
 
-data <- data.frame(price, mileage, engine_power, age, is_new_energy, is_common_color)
-ggpairs(data, upper = list(continuous = wrap("points", alpha = 0.3, size=0.1), combo = "box_no_facet"),
-        lower = list(continuous = wrap('cor', size = 4)))
-detach(bmw_scatterplot)
+```{r correlation_heatmap}
+# creating correlation matrix
+bmw_heatmap <- subset(bmw_clean, select = c("price", "mileage", "engine_power", "age", "is_new_energy", "is_common_color", "feature_1","feature_2","feature_3","feature_4","feature_5","feature_6", "feature_7","feature_8"))
+
+corr_mat <- round(cor(bmw_heatmap),2)
+ 
+# reduce the size of correlation matrix
+melted_corr_mat <- melt(corr_mat)
+head(melted_corr_mat)
+ 
+# plotting the correlation heatmap
+ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile() + scale_fill_gradient2(low = "#075AFF", mid="#FFFFCC", high="#FF0000") + geom_text(aes(Var2, Var1, label = value), color = "black", size = 2) + scale_x_discrete(guide = guide_axis(n.dodge=3))
+``` 
+
+3.  
+
+```{r scatterplot}
+attach(bmw_clean)
+data <- data.frame(price, mileage, engine_power, age, diesel, petrol, hybrid_petrol, M, Z, X, i, is_common_color)
+ggpairs(data, upper = list(continuous = wrap("points", alpha = 0.3,    size=0.1)),
+lower = list(continuous = wrap('cor', size = 4)))
+detach(bmw_clean)
 ```
-
 
 ```{r stepwise_AIC}
 library(leaps)
@@ -190,6 +200,7 @@ cp %>% ggplot(aes(x = predictors, y = summary(fwd)$cp)) +
 
 
 ```
+
 ```{r MLR}
 summary(best_mod)
 ```
@@ -220,12 +231,3 @@ ggplot(bmw_fitted, aes(x = fitted, y = bmw_res, color=bmw_res)) +
 
 #standard residual plot and residual plot vs fitted are both the same
 ```
-
-
-
-
-
-
-
-
-
