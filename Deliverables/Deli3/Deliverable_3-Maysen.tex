@@ -1,0 +1,524 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={Deliverable3},
+  pdfauthor={Maysen Pagan},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Deliverable3}
+\author{Maysen Pagan}
+\date{2023-02-24}
+
+\begin{document}
+\maketitle
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#remove mileage greater than 1,000,000  and less than 0}
+\NormalTok{bmw\_clean }\OtherTok{\textless{}{-}}\NormalTok{ bmw }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(mileage}\SpecialCharTok{\textless{}}\DecValTok{500000} \SpecialCharTok{\&}\NormalTok{ mileage }\SpecialCharTok{\textgreater{}} \DecValTok{0}\NormalTok{)}
+\CommentTok{\#remove the only car whose model\_key is "ActiveHybrid 5"}
+\NormalTok{bmw\_clean }\OtherTok{\textless{}{-}}\NormalTok{ bmw\_clean }\SpecialCharTok{\%\textgreater{}\%}  \FunctionTok{filter}\NormalTok{(model\_key }\SpecialCharTok{!=} \StringTok{"ActiveHybrid 5"}\NormalTok{)}
+\CommentTok{\#change true/false in features to 0/1}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_1 }\OtherTok{\textless{}{-}} \FunctionTok{as.integer}\NormalTok{(}\FunctionTok{as.logical}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_1))}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_2 }\OtherTok{\textless{}{-}} \FunctionTok{as.integer}\NormalTok{(}\FunctionTok{as.logical}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_2))}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_3 }\OtherTok{\textless{}{-}} \FunctionTok{as.integer}\NormalTok{(}\FunctionTok{as.logical}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_3))}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_4 }\OtherTok{\textless{}{-}} \FunctionTok{as.integer}\NormalTok{(}\FunctionTok{as.logical}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_4))}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_5 }\OtherTok{\textless{}{-}} \FunctionTok{as.integer}\NormalTok{(}\FunctionTok{as.logical}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_5))}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_6 }\OtherTok{\textless{}{-}} \FunctionTok{as.integer}\NormalTok{(}\FunctionTok{as.logical}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_6))}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_7 }\OtherTok{\textless{}{-}} \FunctionTok{as.integer}\NormalTok{(}\FunctionTok{as.logical}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_7))}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_8 }\OtherTok{\textless{}{-}} \FunctionTok{as.integer}\NormalTok{(}\FunctionTok{as.logical}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_8))}
+\CommentTok{\#separate registration date column into month, day, and year}
+\NormalTok{bmw\_clean[}\FunctionTok{c}\NormalTok{(}\StringTok{\textquotesingle{}month\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}day\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}year\textquotesingle{}}\NormalTok{)] }\OtherTok{\textless{}{-}} \FunctionTok{str\_split\_fixed}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{registration\_date, }\StringTok{\textquotesingle{}/\textquotesingle{}}\NormalTok{, }\DecValTok{3}\NormalTok{)}
+\CommentTok{\#create column "model\_letter" containing letter of model\_key (if it exists, "none" otherwise)}
+\NormalTok{bmw\_clean }\OtherTok{\textless{}{-}}\NormalTok{ bmw\_clean }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{mutate}\NormalTok{(}\AttributeTok{model\_letter =} \FunctionTok{str\_extract}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{model\_key, }\StringTok{"\^{}[A{-}Za{-}z]"}\NormalTok{))}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{model\_letter }\OtherTok{\textless{}{-}} \FunctionTok{replace\_na}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{model\_letter, }\StringTok{"none"}\NormalTok{)}
+\CommentTok{\#add age variable}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{age }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(}\FunctionTok{difftime}\NormalTok{(}\FunctionTok{as.Date}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{sold\_at,}\StringTok{"\%m/\%d/\%Y"}\NormalTok{),}\FunctionTok{as.Date}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{registration\_date,}\StringTok{"\%m/\%d/\%Y"}\NormalTok{))}\SpecialCharTok{/}\DecValTok{365}\NormalTok{)}
+\CommentTok{\# define common/uncommon colors}
+\NormalTok{common\_color }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"black"}\NormalTok{,}\StringTok{"grey"}\NormalTok{,}\StringTok{"white"}\NormalTok{,}\StringTok{"silver"}\NormalTok{)}
+\NormalTok{uncommon\_color }\OtherTok{\textless{}{-}}\FunctionTok{c}\NormalTok{(}\StringTok{"red"}\NormalTok{, }\StringTok{"blue"}\NormalTok{,}\StringTok{"orange"}\NormalTok{,}\StringTok{"beige"}\NormalTok{,}\StringTok{"brown"}\NormalTok{,}\StringTok{"green"}\NormalTok{)}
+\NormalTok{new\_energy }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"hybrid\_petrol"}\NormalTok{, }\StringTok{"electro"}\NormalTok{)}
+\NormalTok{not\_new\_energy }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\StringTok{"diesel"}\NormalTok{, }\StringTok{"petrol"}\NormalTok{)}
+\NormalTok{bmw\_clean }\OtherTok{\textless{}{-}}\NormalTok{ bmw\_clean }\SpecialCharTok{\%\textgreater{}\%}
+  \CommentTok{\#create dummy columns}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{test1 =} \DecValTok{1}\NormalTok{, }\AttributeTok{test2 =} \DecValTok{1}\NormalTok{, }\AttributeTok{test3 =} \DecValTok{1}\NormalTok{, }\AttributeTok{test4 =} \DecValTok{1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}  
+  \CommentTok{\#determine common color }
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{is\_common\_color =} \FunctionTok{sapply}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{paint\_color, }\ControlFlowTok{function}\NormalTok{(x) x }\SpecialCharTok{\%in\%}\NormalTok{ common\_color )) }\SpecialCharTok{\%\textgreater{}\%}
+  \CommentTok{\#determine electric }
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{is\_new\_energy =} \FunctionTok{sapply}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{fuel, }\ControlFlowTok{function}\NormalTok{(x) x }\SpecialCharTok{\%in\%}\NormalTok{ new\_energy )) }\SpecialCharTok{\%\textgreater{}\%}
+  \CommentTok{\# extract model series }
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{model\_series =} \FunctionTok{substr}\NormalTok{(model\_key, }\DecValTok{1}\NormalTok{,}\DecValTok{1}\NormalTok{))}
+
+\CommentTok{\#turn logical into numeric }
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_1 }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_1)}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_2 }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_2)}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_3 }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_3)}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_4 }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_4)}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_5 }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_5)}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_6 }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_6)}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_7 }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_7)}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_8 }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{feature\_8)}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{is\_common\_color }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{is\_common\_color)}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{is\_new\_energy }\OtherTok{\textless{}{-}} \FunctionTok{as.numeric}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{is\_new\_energy)}
+
+\CommentTok{\#pivot the categorical values}
+\NormalTok{bmw\_clean }\OtherTok{\textless{}{-}}\NormalTok{ bmw\_clean }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{pivot\_wider}\NormalTok{(}\AttributeTok{names\_from =}\NormalTok{ paint\_color, }\AttributeTok{values\_from =}\NormalTok{ test1,}\AttributeTok{values\_fill =} \DecValTok{0}\NormalTok{ ) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{pivot\_wider}\NormalTok{(}\AttributeTok{names\_from =}\NormalTok{ fuel, }\AttributeTok{values\_from =}\NormalTok{ test2, }\AttributeTok{values\_fill =} \DecValTok{0}\NormalTok{ ) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_wider}\NormalTok{(}\AttributeTok{names\_from =}\NormalTok{ car\_type, }\AttributeTok{values\_from =}\NormalTok{ test3, }\AttributeTok{values\_fill =} \DecValTok{0}\NormalTok{ ) }
+\CommentTok{\# pivot\_wider(names\_from = model\_letter, values\_from = test4, values\_fill = 0 )}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#create dummy variables}
+\StringTok{\textasciigrave{}}\AttributeTok{1}\StringTok{\textasciigrave{}} \OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{model\_series }\SpecialCharTok{==} \DecValTok{1}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{M }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{model\_series }\SpecialCharTok{==} \StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\StringTok{\textasciigrave{}}\AttributeTok{4}\StringTok{\textasciigrave{}} \OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{model\_series }\SpecialCharTok{==} \DecValTok{4}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{Z }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{model\_series }\SpecialCharTok{==} \StringTok{\textquotesingle{}Z\textquotesingle{}}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\StringTok{\textasciigrave{}}\AttributeTok{2}\StringTok{\textasciigrave{}} \OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{model\_series }\SpecialCharTok{==} \DecValTok{2}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\StringTok{\textasciigrave{}}\AttributeTok{6}\StringTok{\textasciigrave{}} \OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{model\_series }\SpecialCharTok{==} \DecValTok{6}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{i }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{model\_series }\SpecialCharTok{==} \StringTok{\textquotesingle{}i\textquotesingle{}}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\StringTok{\textasciigrave{}}\AttributeTok{5}\StringTok{\textasciigrave{}} \OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{model\_series }\SpecialCharTok{==} \DecValTok{5}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\NormalTok{X }\OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{model\_series }\SpecialCharTok{==} \StringTok{\textquotesingle{}X\textquotesingle{}}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\StringTok{\textasciigrave{}}\AttributeTok{7}\StringTok{\textasciigrave{}} \OtherTok{\textless{}{-}} \FunctionTok{ifelse}\NormalTok{(bmw\_clean}\SpecialCharTok{$}\NormalTok{model\_series }\SpecialCharTok{==} \DecValTok{7}\NormalTok{, }\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+
+\CommentTok{\#add columnns to bmw\_clean data set}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{1}\StringTok{\textasciigrave{}} \OtherTok{=} \StringTok{\textasciigrave{}}\AttributeTok{1}\StringTok{\textasciigrave{}}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{M }\OtherTok{=}\NormalTok{ M}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{4}\StringTok{\textasciigrave{}} \OtherTok{=} \StringTok{\textasciigrave{}}\AttributeTok{4}\StringTok{\textasciigrave{}}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{Z }\OtherTok{=}\NormalTok{ Z}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{2}\StringTok{\textasciigrave{}} \OtherTok{=} \StringTok{\textasciigrave{}}\AttributeTok{2}\StringTok{\textasciigrave{}}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{6}\StringTok{\textasciigrave{}} \OtherTok{=} \StringTok{\textasciigrave{}}\AttributeTok{6}\StringTok{\textasciigrave{}}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{i }\OtherTok{=}\NormalTok{ i}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{5}\StringTok{\textasciigrave{}} \OtherTok{=} \StringTok{\textasciigrave{}}\AttributeTok{5}\StringTok{\textasciigrave{}}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\NormalTok{X }\OtherTok{=}\NormalTok{ X}
+\NormalTok{bmw\_clean}\SpecialCharTok{$}\StringTok{\textasciigrave{}}\AttributeTok{7}\StringTok{\textasciigrave{}} \OtherTok{=} \StringTok{\textasciigrave{}}\AttributeTok{7}\StringTok{\textasciigrave{}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{1}
+\tightlist
+\item
+\end{enumerate}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#copy of bmw\_clean}
+\NormalTok{bmw\_scatterplot }\OtherTok{\textless{}{-}}\NormalTok{ bmw\_clean}
+\CommentTok{\#change is\_new\_energy and is\_common\_color to categorical variables}
+\NormalTok{bmw\_scatterplot}\SpecialCharTok{$}\NormalTok{is\_new\_energy }\OtherTok{\textless{}{-}} \FunctionTok{as.factor}\NormalTok{(bmw\_scatterplot}\SpecialCharTok{$}\NormalTok{is\_new\_energy)}
+\NormalTok{bmw\_scatterplot}\SpecialCharTok{$}\NormalTok{is\_common\_color }\OtherTok{\textless{}{-}} \FunctionTok{as.factor}\NormalTok{(bmw\_scatterplot}\SpecialCharTok{$}\NormalTok{is\_common\_color)}
+\FunctionTok{attach}\NormalTok{(bmw\_scatterplot)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## The following objects are masked _by_ .GlobalEnv:
+## 
+##     1, 2, 4, 5, 6, 7, i, M, X, Z
+\end{verbatim}
+
+\begin{verbatim}
+## The following object is masked from package:MASS:
+## 
+##     petrol
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{data }\OtherTok{\textless{}{-}} \FunctionTok{data.frame}\NormalTok{(price, mileage, engine\_power, age, is\_new\_energy, is\_common\_color)}
+\FunctionTok{ggpairs}\NormalTok{(data, }\AttributeTok{upper =} \FunctionTok{list}\NormalTok{(}\AttributeTok{continuous =} \FunctionTok{wrap}\NormalTok{(}\StringTok{"points"}\NormalTok{, }\AttributeTok{alpha =} \FloatTok{0.3}\NormalTok{, }\AttributeTok{size=}\FloatTok{0.1}\NormalTok{), }\AttributeTok{combo =} \StringTok{"box\_no\_facet"}\NormalTok{),}
+        \AttributeTok{lower =} \FunctionTok{list}\NormalTok{(}\AttributeTok{continuous =} \FunctionTok{wrap}\NormalTok{(}\StringTok{\textquotesingle{}cor\textquotesingle{}}\NormalTok{, }\AttributeTok{size =} \DecValTok{4}\NormalTok{)))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+\end{verbatim}
+
+\begin{verbatim}
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+## `stat_bin()` using `bins = 30`. Pick better value with `binwidth`.
+\end{verbatim}
+
+\includegraphics{Deliverable_3-Maysen_files/figure-latex/scatterplot-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{detach}\NormalTok{(bmw\_scatterplot)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(leaps)}
+\CommentTok{\#full model}
+\NormalTok{full\_mod }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(price }\SpecialCharTok{\textasciitilde{}}\NormalTok{ mileage }\SpecialCharTok{+}\NormalTok{ engine\_power }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ is\_new\_energy }\SpecialCharTok{+}\NormalTok{ is\_common\_color, }\AttributeTok{data =}\NormalTok{ bmw\_clean)}
+
+\CommentTok{\#best model using stepwise AIC}
+\NormalTok{best\_mod }\OtherTok{\textless{}{-}} \FunctionTok{stepAIC}\NormalTok{(full\_mod, }\AttributeTok{direction =} \StringTok{"both"}\NormalTok{, }\AttributeTok{trace =} \ConstantTok{FALSE}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(best\_mod)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = price ~ mileage + engine_power + age + is_new_energy + 
+##     is_common_color, data = bmw_clean)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -31225  -2417   -237   2018 159442 
+## 
+## Coefficients:
+##                   Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)      7.841e+03  3.892e+02  20.149  < 2e-16 ***
+## mileage         -3.826e-02  1.622e-03 -23.589  < 2e-16 ***
+## engine_power     1.425e+02  2.120e+00  67.221  < 2e-16 ***
+## age             -9.671e+02  3.767e+01 -25.671  < 2e-16 ***
+## is_new_energy    1.442e+04  1.811e+03   7.965 2.05e-15 ***
+## is_common_color  2.848e+02  1.925e+02   1.480    0.139    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 5713 on 4834 degrees of freedom
+## Multiple R-squared:  0.6132, Adjusted R-squared:  0.6128 
+## F-statistic:  1533 on 5 and 4834 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#comparing AIC of best model against full model (and other stats)}
+\NormalTok{broom}\SpecialCharTok{::}\FunctionTok{glance}\NormalTok{(best\_mod)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 1 x 12
+##   r.squared adj.r.sq~1 sigma stati~2 p.value    df  logLik    AIC    BIC devia~3
+##       <dbl>      <dbl> <dbl>   <dbl>   <dbl> <dbl>   <dbl>  <dbl>  <dbl>   <dbl>
+## 1     0.613      0.613 5713.   1533.       0     5 -48733. 97480. 97525. 1.58e11
+## # ... with 2 more variables: df.residual <int>, nobs <int>, and abbreviated
+## #   variable names 1: adj.r.squared, 2: statistic, 3: deviance
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{broom}\SpecialCharTok{::}\FunctionTok{glance}\NormalTok{(full\_mod)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 1 x 12
+##   r.squared adj.r.sq~1 sigma stati~2 p.value    df  logLik    AIC    BIC devia~3
+##       <dbl>      <dbl> <dbl>   <dbl>   <dbl> <dbl>   <dbl>  <dbl>  <dbl>   <dbl>
+## 1     0.613      0.613 5713.   1533.       0     5 -48733. 97480. 97525. 1.58e11
+## # ... with 2 more variables: df.residual <int>, nobs <int>, and abbreviated
+## #   variable names 1: adj.r.squared, 2: statistic, 3: deviance
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{fwd }\OtherTok{\textless{}{-}}\NormalTok{ leaps}\SpecialCharTok{::}\FunctionTok{regsubsets}\NormalTok{(price }\SpecialCharTok{\textasciitilde{}}\NormalTok{ mileage }\SpecialCharTok{+}\NormalTok{ engine\_power }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ is\_new\_energy }\SpecialCharTok{+}\NormalTok{ is\_common\_color, }
+                         \AttributeTok{data =}\NormalTok{ bmw\_clean, }
+                         \AttributeTok{method =} \StringTok{"forward"}\NormalTok{,}
+                         \AttributeTok{nvmax =} \DecValTok{5}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(fwd)}\SpecialCharTok{$}\NormalTok{which}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##   (Intercept) mileage engine_power   age is_new_energy is_common_color
+## 1        TRUE   FALSE         TRUE FALSE         FALSE           FALSE
+## 2        TRUE   FALSE         TRUE  TRUE         FALSE           FALSE
+## 3        TRUE    TRUE         TRUE  TRUE         FALSE           FALSE
+## 4        TRUE    TRUE         TRUE  TRUE          TRUE           FALSE
+## 5        TRUE    TRUE         TRUE  TRUE          TRUE            TRUE
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{(b }\OtherTok{\textless{}{-}} \FunctionTok{which.min}\NormalTok{(}\FunctionTok{summary}\NormalTok{(fwd)}\SpecialCharTok{$}\NormalTok{cp))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 5
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# b = 8, so a model with 8 variables has lowest Mallow\textquotesingle{}s CP and is therefore the best model}
+\CommentTok{\#best model according to to CP and forward selection}
+\FunctionTok{colnames}\NormalTok{(}\FunctionTok{summary}\NormalTok{(fwd)}\SpecialCharTok{$}\NormalTok{which)[}\FunctionTok{summary}\NormalTok{(fwd)}\SpecialCharTok{$}\NormalTok{which[b,]]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "(Intercept)"     "mileage"         "engine_power"    "age"            
+## [5] "is_new_energy"   "is_common_color"
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#best overall model confirms that best model from stepwise AIC is correct}
+\NormalTok{best\_model }\OtherTok{\textless{}{-}}\NormalTok{ (}\FunctionTok{lm}\NormalTok{(price }\SpecialCharTok{\textasciitilde{}}\NormalTok{ mileage }\SpecialCharTok{+}\NormalTok{ engine\_power }\SpecialCharTok{+}\NormalTok{ age }\SpecialCharTok{+}\NormalTok{ is\_new\_energy }\SpecialCharTok{+}\NormalTok{ is\_common\_color, bmw\_clean))}
+\FunctionTok{summary}\NormalTok{(best\_model)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = price ~ mileage + engine_power + age + is_new_energy + 
+##     is_common_color, data = bmw_clean)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -31225  -2417   -237   2018 159442 
+## 
+## Coefficients:
+##                   Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)      7.841e+03  3.892e+02  20.149  < 2e-16 ***
+## mileage         -3.826e-02  1.622e-03 -23.589  < 2e-16 ***
+## engine_power     1.425e+02  2.120e+00  67.221  < 2e-16 ***
+## age             -9.671e+02  3.767e+01 -25.671  < 2e-16 ***
+## is_new_energy    1.442e+04  1.811e+03   7.965 2.05e-15 ***
+## is_common_color  2.848e+02  1.925e+02   1.480    0.139    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 5713 on 4834 degrees of freedom
+## Multiple R-squared:  0.6132, Adjusted R-squared:  0.6128 
+## F-statistic:  1533 on 5 and 4834 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{cp }\OtherTok{\textless{}{-}} \FunctionTok{as\_tibble}\NormalTok{(}\FunctionTok{matrix}\NormalTok{(}\FunctionTok{summary}\NormalTok{(fwd)}\SpecialCharTok{$}\NormalTok{cp))}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Warning: The `x` argument of `as_tibble.matrix()` must have unique column names if
+## `.name_repair` is omitted as of tibble 2.0.0.
+## i Using compatibility `.name_repair`.
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{predictors }\OtherTok{\textless{}{-}} \FunctionTok{c}\NormalTok{(}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{, }\DecValTok{3}\NormalTok{, }\DecValTok{4}\NormalTok{, }\DecValTok{5}\NormalTok{)}
+\NormalTok{cp }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{add\_column}\NormalTok{(}\AttributeTok{predictors =}\NormalTok{ predictors)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 5 x 2
+##        V1 predictors
+##     <dbl>      <dbl>
+## 1 2563.            1
+## 2  636.            2
+## 3   68.0           3
+## 4    6.19          4
+## 5    6             5
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#bar graph}
+\NormalTok{cp }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x =}\NormalTok{ predictors, }\AttributeTok{y =}\NormalTok{ V1)) }\SpecialCharTok{+} 
+  \FunctionTok{geom\_bar}\NormalTok{(}\AttributeTok{stat =} \StringTok{"identity"}\NormalTok{, }\AttributeTok{color =} \StringTok{"\#1974D2"}\NormalTok{, }\AttributeTok{fill =} \StringTok{"white"}\NormalTok{) }\SpecialCharTok{+} 
+  \FunctionTok{scale\_x\_continuous}\NormalTok{(}\AttributeTok{n.breaks =} \DecValTok{5}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{geom\_text}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{label =} \FunctionTok{round}\NormalTok{(V1,}\DecValTok{2}\NormalTok{)), }\AttributeTok{vjust =} \SpecialCharTok{{-}}\FloatTok{0.25}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{x =} \StringTok{"Number of Predictors"}\NormalTok{, }\AttributeTok{y =} \StringTok{"Mallow\textquotesingle{}s CP"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Deliverable_3-Maysen_files/figure-latex/Mallows_plot-1.pdf}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#point plot}
+\CommentTok{\#cp \%\textgreater{}\% ggplot(aes(x = predictors, y = V1)) + }
+\CommentTok{\#   geom\_point() + }
+\CommentTok{\#   scale\_x\_continuous(n.breaks = 10) +}
+\CommentTok{\#   geom\_text(aes(label = round(V1,2)), vjust = {-}0.60) +}
+\CommentTok{\#   labs(x = "Number of Predictors", y = "Mallow\textquotesingle{}s CP")}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(best\_mod)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = price ~ mileage + engine_power + age + is_new_energy + 
+##     is_common_color, data = bmw_clean)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -31225  -2417   -237   2018 159442 
+## 
+## Coefficients:
+##                   Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)      7.841e+03  3.892e+02  20.149  < 2e-16 ***
+## mileage         -3.826e-02  1.622e-03 -23.589  < 2e-16 ***
+## engine_power     1.425e+02  2.120e+00  67.221  < 2e-16 ***
+## age             -9.671e+02  3.767e+01 -25.671  < 2e-16 ***
+## is_new_energy    1.442e+04  1.811e+03   7.965 2.05e-15 ***
+## is_common_color  2.848e+02  1.925e+02   1.480    0.139    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 5713 on 4834 degrees of freedom
+## Multiple R-squared:  0.6132, Adjusted R-squared:  0.6128 
+## F-statistic:  1533 on 5 and 4834 DF,  p-value: < 2.2e-16
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#add fitted values column to data set}
+\NormalTok{bmw\_fitted }\OtherTok{\textless{}{-}} \FunctionTok{cbind}\NormalTok{(bmw\_clean, }\AttributeTok{fitted =} \FunctionTok{fitted}\NormalTok{(best\_model))}
+
+\NormalTok{standard\_res }\OtherTok{\textless{}{-}} \FunctionTok{rstandard}\NormalTok{(best\_model)}
+\FunctionTok{plot}\NormalTok{(bmw\_fitted}\SpecialCharTok{$}\NormalTok{fitted, standard\_res, }
+     \AttributeTok{ylab=}\StringTok{"Standardized Residuals"}\NormalTok{, }
+     \AttributeTok{xlab=}\StringTok{"Fitted Values"}\NormalTok{) }
+\FunctionTok{abline}\NormalTok{(}\DecValTok{0}\NormalTok{, }\DecValTok{0}\NormalTok{) }
+\FunctionTok{abline}\NormalTok{(}\DecValTok{2}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\FunctionTok{abline}\NormalTok{(}\SpecialCharTok{{-}}\DecValTok{2}\NormalTok{, }\DecValTok{0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{Deliverable_3-Maysen_files/figure-latex/standard_resid-1.pdf}
+
+\hypertarget{features}{%
+\subsection{Features}\label{features}}
+
+\end{document}
