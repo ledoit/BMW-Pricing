@@ -129,7 +129,7 @@ detach(bmw_scatterplot)
 ```{r stepwise_AIC}
 library(leaps)
 #full model
-full_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color, data = bmw_clean)
+full_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 +  feature_4 + feature_6 + feature_8, data = bmw_clean)
 
 #best model using stepwise AIC
 best_mod <- stepAIC(full_mod, direction = "both", trace = FALSE)
@@ -141,35 +141,44 @@ plot(aic)
 
 #alternative graph
 #all possible models in forward selection
+eleven_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 + feature_4 + feature_6 + feature_8, data = bmw_clean)
+ten_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 + feature_4 + feature_6, data = bmw_clean)
+nine_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 + feature_4, data = bmw_clean)
+eight_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3, data = bmw_clean)
+seven_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2, data = bmw_clean)
+six_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1, data = bmw_clean)
+five_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color, data = bmw_clean)
 four_mod <- lm(price ~ mileage + engine_power + age + is_new_energy, data = bmw_clean)
 three_mod <- lm(price ~ mileage + engine_power + age, data = bmw_clean)
 two_mod <- lm(price ~ mileage + engine_power, data = bmw_clean)
 one_mod <- lm(price ~ mileage, data = bmw_clean)
-AIC(full_mod)
-AIC(four_mod)
-AIC(three_mod)
-AIC(two_mod)
-AIC(one_mod)
 
 models <- list(
-  "Five Predictors" = lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color, data = bmw_clean),
-  "Four Predictors" = lm(price ~ mileage + engine_power + age + is_new_energy, data = bmw_clean),
-  "Three Predictors" = lm(price ~ mileage + engine_power + age, data = bmw_clean),
-  "Two Predictors" = lm(price ~ mileage + engine_power, data = bmw_clean),
-  "One Predictors" = lm(price ~ mileage, data = bmw_clean)
+  "Eleven Predictors" = eleven_mod,
+  "Ten Predictors" = ten_mod,
+  "Nine Predictors" = nine_mod,
+  "Eght Predictors" = eight_mod,
+  "Seven Predictors" = seven_mod,
+  "Six Predictors" = six_mod,
+  "Five Predictors" = five_mod,
+  "Four Predictors" = four_mod,
+  "Three Predictors" = three_mod,
+  "Two Predictors" = two_mod,
+  "One Predictors" = one_mod
 )
+
 
 modelsummary(models, output = "kableExtra")
 ```
 
 ```{r stepwise_Mallows}
-fwd <- leaps::regsubsets(price ~ mileage + engine_power + age + is_new_energy + is_common_color, 
+fwd <- leaps::regsubsets(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 +  feature_4 + feature_6 + feature_8,
                          data = bmw_clean, 
                          method = "forward",
-                         nvmax = 5)
+                         nvmax = 11)
 summary(fwd)$which
 (b <- which.min(summary(fwd)$cp))
-# b = 8, so a model with 8 variables has lowest Mallow's CP and is therefore the best model
+# b = 11, so a model with 11 variables has lowest Mallow's CP and is therefore the best model
 #best model according to to CP and forward selection
 colnames(summary(fwd)$which)[summary(fwd)$which[b,]]
 #best overall model confirms that best model from stepwise AIC is correct
@@ -179,17 +188,21 @@ summary(best_model)
 
 ```{r Mallows_plot}
 
-predictors <- c(1, 2, 3, 4, 5)
+predictors <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+cp <- as.data.frame(summary(fwd)$cp)
+cp$num_predictors = predictors
 
 #bar graph
-cp %>% ggplot(aes(x = predictors, y = summary(fwd)$cp)) + 
+cp %>% ggplot(aes(x = num_predictors, y = summary(fwd)$cp)) + 
   geom_bar(stat = "identity", color = "#1974D2", fill = "white") + 
-  scale_x_continuous(n.breaks = 5) +
-  geom_text(aes(label = round(V1,2)), vjust = -0.25) +
+  scale_x_continuous(n.breaks = 11) +
+  geom_text(aes(label = round(summary(fwd)$cp, 2), vjust = -0.25)) +
   labs(title = "Mallow's CP for Each Stepwise Model", x = "Number of Predictors", y = "Mallow's CP")
 
 
 ```
+
+
 ```{r MLR}
 summary(best_mod)
 ```
@@ -207,7 +220,8 @@ ggplot(bmw_fitted, aes(x = fitted, y = bmw_stdres, color=bmw_stdres)) +
   geom_point(size = 0.2, alpha =0.2) + 
   labs(title = "BMW Prices",color = "Standard RSS") +
   ylab("Standardized Residuals") + xlab("Fitted Values") + 
-  geom_hline(yintercept=0, color = "blue") 
+  geom_hline(yintercept=-2, color = "blue") +
+  geom_hline(yintercept=2, color = "blue")
 
 #residuals
 bmw_res <- resid(bmw.lm)
