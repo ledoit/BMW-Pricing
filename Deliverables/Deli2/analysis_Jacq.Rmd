@@ -13,6 +13,7 @@ library(hrbrthemes)
 library(GGally)
 library(gridExtra)
 library(paletteer)
+library(dplyr)
 ```
 
 Loading the data
@@ -50,4 +51,61 @@ bmw2 %>% ggplot(aes(mileage, price)) + geom_point(size = 0.2, alpha = 0.2) + geo
 
 bmw2_ols <- lm(price~mileage, data = bmw2)
 ```
+
+```{r}
+# define common/uncommon colors
+common_color <- c("black","grey","white","silver")
+uncommon_color <-c("red", "blue","orange","beige","brown","green")
+# define the logical value columns
+#logical_list <- c(colnames(bmw[8:15]),"is_common_color")
+
+#loading data
+bmw <- read.csv("BMWpricing.csv")
+
+#process the date
+bmw_test <- bmw 
+bmw_test$registration_date <- as.Date(bmw_test$registration_date, "%m/%d/%Y")
+bmw_test$sold_at <- as.Date(bmw_test$sold_at, "%m/%d/%Y")
+bmw_test$period <- bmw_test$sold_at - bmw_test$registration_date
+bmw_test <- select(bmw_test, -registration_date,-sold_at)
+
+
+bmw_test <- bmw %>%
+  #create dummy columns
+  mutate(test1 = 1, test2 = 1, test3 = 1, test4 = 1) %>%  
+  #determine common color 
+  mutate(is_common_color = sapply(bmw$paint_color, function(x) x %in% common_color )) %>%
+  # extract model series 
+  mutate(model_letter = substr(model_key, 1,1))
+
+#turn logical into numeric 
+bmw_test$feature_1 <- as.numeric(bmw_test$feature_1)
+bmw_test$feature_2 <- as.numeric(bmw_test$feature_2)
+bmw_test$feature_3 <- as.numeric(bmw_test$feature_3)
+bmw_test$feature_4 <- as.numeric(bmw_test$feature_4)
+bmw_test$feature_5 <- as.numeric(bmw_test$feature_5)
+bmw_test$feature_6 <- as.numeric(bmw_test$feature_6)
+bmw_test$feature_7 <- as.numeric(bmw_test$feature_7)
+bmw_test$feature_8 <- as.numeric(bmw_test$feature_8)
+bmw_test$is_common_color <- as.numeric(bmw_test$is_common_color)
+
+
+#for (x in logical_list){
+#  bmw_test$x <- as.numeric(bmw_test$x)
+#}
+
+#pivot the categorical valuew 
+bmw_test <- bmw_test %>% 
+  pivot_wider(names_from = paint_color, values_from = test1,values_fill = 0 ) %>% 
+  pivot_wider(names_from = fuel, values_from = test2, values_fill = 0 ) %>%
+  pivot_wider(names_from = car_type, values_from = test3, values_fill = 0 ) %>%
+  pivot_wider(names_from = model_letter, values_from = test4, values_fill = 0 )
+
+
+bmw_test
+```
+  
+
+
+
 

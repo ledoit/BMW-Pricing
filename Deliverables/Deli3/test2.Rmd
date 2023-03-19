@@ -1,0 +1,145 @@
+---
+title: "Deliverable3"
+author: "Phil Ledoit"
+date: "2023-02-24"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(hrbrthemes)
+library(GGally)
+library(kableExtra)
+library(knitr)
+library(car)
+library(dplyr)
+library(lubridate)
+library(AICcmodavg)
+library(leaps)
+library(caret)
+library(MASS)
+library(olsrr)
+library(modelsummary)
+library(reshape2)
+library(lattice)
+
+bmw <- as_tibble(read.csv("C:/Users/User/Documents/BU 2023/Sp23/MA575/Lab/BMW-Pricing/BMWpricing.csv", comment.char="#")) 
+```
+
+
+```{r cleaning}
+#remove mileage greater than 1,000,000  and less than 0
+bmw_clean <- bmw %>% filter(mileage<500000 & mileage > 0)
+#remove the only car whose model_key is "ActiveHybrid 5"
+bmw_clean <- bmw_clean %>%  filter(model_key != "ActiveHybrid 5")
+#change true/false in features to 0/1
+bmw_clean$feature_1 <- as.integer(as.logical(bmw_clean$feature_1))
+bmw_clean$feature_2 <- as.integer(as.logical(bmw_clean$feature_2))
+bmw_clean$feature_3 <- as.integer(as.logical(bmw_clean$feature_3))
+bmw_clean$feature_4 <- as.integer(as.logical(bmw_clean$feature_4))
+bmw_clean$feature_5 <- as.integer(as.logical(bmw_clean$feature_5))
+bmw_clean$feature_6 <- as.integer(as.logical(bmw_clean$feature_6))
+bmw_clean$feature_7 <- as.integer(as.logical(bmw_clean$feature_7))
+bmw_clean$feature_8 <- as.integer(as.logical(bmw_clean$feature_8))
+#separate registration date column into month, day, and year
+bmw_clean[c('month', 'day', 'year')] <- str_split_fixed(bmw_clean$registration_date, '/', 3)
+#create column "model_letter" containing letter of model_key (if it exists, "none" otherwise)
+bmw_clean <- bmw_clean %>% mutate(model_letter = str_extract(bmw_clean$model_key, "^[A-Za-z]"))
+bmw_clean$model_letter <- replace_na(bmw_clean$model_letter, "none")
+#add age variable
+bmw_clean$age <- as.numeric(difftime(as.Date(bmw_clean$sold_at,"%m/%d/%Y"),as.Date(bmw_clean$registration_date,"%m/%d/%Y"))/365)
+# define common/uncommon colors
+common_color <- c("black","grey","white","silver")
+uncommon_color <-c("red", "blue","orange","beige","brown","green")
+new_energy <- c("hybrid_petrol", "electro")
+not_new_energy <- c("diesel", "petrol")
+bmw_clean <- bmw_clean %>%
+  #create dummy columns
+  mutate(test1 = 1, test2 = 1, test3 = 1, test4 = 1) %>%  
+  #determine common color 
+  mutate(is_common_color = sapply(bmw_clean$paint_color, function(x) x %in% common_color )) %>%
+  #determine electric 
+  mutate(is_new_energy = sapply(bmw_clean$fuel, function(x) x %in% new_energy )) %>%
+  # extract model series 
+  mutate(model_series = substr(model_key, 1,1))
+
+#turn logical into numeric 
+bmw_clean$feature_1 <- as.numeric(bmw_clean$feature_1)
+bmw_clean$feature_2 <- as.numeric(bmw_clean$feature_2)
+bmw_clean$feature_3 <- as.numeric(bmw_clean$feature_3)
+bmw_clean$feature_4 <- as.numeric(bmw_clean$feature_4)
+bmw_clean$feature_5 <- as.numeric(bmw_clean$feature_5)
+bmw_clean$feature_6 <- as.numeric(bmw_clean$feature_6)
+bmw_clean$feature_7 <- as.numeric(bmw_clean$feature_7)
+bmw_clean$feature_8 <- as.numeric(bmw_clean$feature_8)
+bmw_clean$is_common_color <- as.numeric(bmw_clean$is_common_color)
+bmw_clean$is_new_energy <- as.numeric(bmw_clean$is_new_energy)
+
+#pivot the categorical values
+bmw_clean <- bmw_clean %>% 
+  pivot_wider(names_from = paint_color, values_from = test1,values_fill = 0 ) %>% 
+  pivot_wider(names_from = fuel, values_from = test2, values_fill = 0 ) %>%
+  pivot_wider(names_from = car_type, values_from = test3, values_fill = 0 ) 
+# pivot_wider(names_from = model_letter, values_from = test4, values_fill = 0 )
+```
+
+```{r model_series_dummy}
+
+#create dummy variables
+`1` <- ifelse(bmw_clean$model_series == 1, 1, 0)
+M <- ifelse(bmw_clean$model_series == 'M', 1, 0)
+`4` <- ifelse(bmw_clean$model_series == 4, 1, 0)
+Z <- ifelse(bmw_clean$model_series == 'Z', 1, 0)
+`2` <- ifelse(bmw_clean$model_series == 2, 1, 0)
+`6` <- ifelse(bmw_clean$model_series == 6, 1, 0)
+i <- ifelse(bmw_clean$model_series == 'i', 1, 0)
+`5` <- ifelse(bmw_clean$model_series == 5, 1, 0)
+X <- ifelse(bmw_clean$model_series == 'X', 1, 0)
+`7` <- ifelse(bmw_clean$model_series == 7, 1, 0)
+
+#add columnns to bmw_clean data set
+bmw_clean$`1` = `1`
+bmw_clean$M = M
+bmw_clean$`4` = `4`
+bmw_clean$Z = Z
+bmw_clean$`2` = `2`
+bmw_clean$`6` = `6`
+bmw_clean$i = i
+bmw_clean$`5` = `5`
+bmw_clean$X = X
+bmw_clean$`7` = `7`
+
+```
+
+2.
+``` {r scatterplot}
+#copy of bmw_clean
+bmw_scatterplot <- bmw_clean
+#change is_new_energy and is_common_color to categorical variables
+bmw_scatterplot$is_new_energy <- as.factor(bmw_scatterplot$is_new_energy)
+bmw_scatterplot$is_common_color <- as.factor(bmw_scatterplot$is_common_color)
+attach(bmw_scatterplot)
+
+data <- data.frame(price, mileage, engine_power, age, is_new_energy, is_common_color)
+ggpairs(data, upper = list(continuous = wrap("points", alpha = 0.3, size=0.1), combo = "box_no_facet"),
+        lower = list(continuous = wrap('cor', size = 4)))
+detach(bmw_scatterplot)
+```
+
+
+```{correlation heatmap}
+# creating correlation matrix
+corr_mat <- round(cor(data),2)
+ 
+# reduce the size of correlation matrix
+melted_corr_mat <- melt(corr_mat)
+head(melted_corr_mat)
+ 
+# plotting the correlation heatmap
+ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2,
+                                   fill=value)) +
+geom_tile() +
+geom_text(aes(Var2, Var1, label = value),
+          color = "black", size = 1)
+```
