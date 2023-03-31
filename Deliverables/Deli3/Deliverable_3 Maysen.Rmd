@@ -10,13 +10,26 @@ library(tidyverse)
 library(ggplot2)
 library(hrbrthemes)
 library(GGally)
-bmw <- as_tibble(read.csv("~/Desktop/MA_575/Project/BMWpricing.csv", comment.char="#")) %>% 
-  select(-maker_key)
+library(kableExtra)
+library(knitr)
+library(car)
+library(dplyr)
+library(lubridate)
+library(AICcmodavg)
+library(leaps)
+library(caret)
+library(MASS)
+library(olsrr)
+library(modelsummary)
+
+bmw <- as_tibble(read.csv("~/Desktop/MA_575/Project/BMWpricing.csv", comment.char="#")) 
 ```
 
 ```{r cleaning}
 #remove mileage greater than 1,000,000  and less than 0
 bmw_clean <- bmw %>% filter(mileage<500000 & mileage > 0)
+#remove the only car whose model_key is "ActiveHybrid 5"
+bmw_clean <- bmw_clean %>%  filter(model_key != "ActiveHybrid 5")
 #change true/false in features to 0/1
 bmw_clean$feature_1 <- as.integer(as.logical(bmw_clean$feature_1))
 bmw_clean$feature_2 <- as.integer(as.logical(bmw_clean$feature_2))
@@ -31,34 +44,203 @@ bmw_clean[c('month', 'day', 'year')] <- str_split_fixed(bmw_clean$registration_d
 #create column "model_letter" containing letter of model_key (if it exists, "none" otherwise)
 bmw_clean <- bmw_clean %>% mutate(model_letter = str_extract(bmw_clean$model_key, "^[A-Za-z]"))
 bmw_clean$model_letter <- replace_na(bmw_clean$model_letter, "none")
+#add age variable
+bmw_clean$age <- as.numeric(difftime(as.Date(bmw_clean$sold_at,"%m/%d/%Y"),as.Date(bmw_clean$registration_date,"%m/%d/%Y"))/365)
+# define common/uncommon colors
+common_color <- c("black","grey","white","silver")
+uncommon_color <-c("red", "blue","orange","beige","brown","green")
+new_energy <- c("hybrid_petrol", "electro")
+not_new_energy <- c("diesel", "petrol")
+bmw_clean <- bmw_clean %>%
+  #create dummy columns
+  mutate(test1 = 1, test2 = 1, test3 = 1, test4 = 1) %>%  
+  #determine common color 
+  mutate(is_common_color = sapply(bmw_clean$paint_color, function(x) x %in% common_color )) %>%
+  #determine electric 
+  mutate(is_new_energy = sapply(bmw_clean$fuel, function(x) x %in% new_energy )) %>%
+  # extract model series 
+  mutate(model_series = substr(model_key, 1,1))
+
+#turn logical into numeric 
+bmw_clean$feature_1 <- as.numeric(bmw_clean$feature_1)
+bmw_clean$feature_2 <- as.numeric(bmw_clean$feature_2)
+bmw_clean$feature_3 <- as.numeric(bmw_clean$feature_3)
+bmw_clean$feature_4 <- as.numeric(bmw_clean$feature_4)
+bmw_clean$feature_5 <- as.numeric(bmw_clean$feature_5)
+bmw_clean$feature_6 <- as.numeric(bmw_clean$feature_6)
+bmw_clean$feature_7 <- as.numeric(bmw_clean$feature_7)
+bmw_clean$feature_8 <- as.numeric(bmw_clean$feature_8)
+bmw_clean$is_common_color <- as.numeric(bmw_clean$is_common_color)
+bmw_clean$is_new_energy <- as.numeric(bmw_clean$is_new_energy)
+
+#pivot the categorical values
+bmw_clean <- bmw_clean %>% 
+  pivot_wider(names_from = paint_color, values_from = test1,values_fill = 0 ) %>% 
+  pivot_wider(names_from = fuel, values_from = test2, values_fill = 0 ) %>%
+  pivot_wider(names_from = car_type, values_from = test3, values_fill = 0 ) 
+# pivot_wider(names_from = model_letter, values_from = test4, values_fill = 0 )
 ```
 
-```{r stepwise}
-library(leaps)
-fwd <- leaps::regsubsets(price ~ mileage + engine_power + feature_1 + feature_2 + feature_3 + feature_4 + feature_5 + feature_6 + feature_7 + feature_8, 
-                         data = bmw_clean, 
-                         method = "forward",
-                         nvmax = 10)
-summary(fwd)$which
-(b <- which.min(summary(fwd)$cp))
-# b = 8, so model with 8 variables has lowest Mallow's CP and is therefore the best model
-#best model according to to CP and forward selection
-colnames(summary(fwd)$which)[summary(fwd)$which[b,]]
-#best overall model
-model <- (lm(price ~ mileage + engine_power + feature_1 + feature_2 + feature_3 + feature_4 + feature_6 + feature_8, bmw_clean))
-summary(model)
+```{r model_series_dummy}
+
+#create dummy variables
+`1` <- ifelse(bmw_clean$model_series == 1, 1, 0)
+M <- ifelse(bmw_clean$model_series == 'M', 1, 0)
+`4` <- ifelse(bmw_clean$model_series == 4, 1, 0)
+Z <- ifelse(bmw_clean$model_series == 'Z', 1, 0)
+`2` <- ifelse(bmw_clean$model_series == 2, 1, 0)
+`6` <- ifelse(bmw_clean$model_series == 6, 1, 0)
+i <- ifelse(bmw_clean$model_series == 'i', 1, 0)
+`5` <- ifelse(bmw_clean$model_series == 5, 1, 0)
+X <- ifelse(bmw_clean$model_series == 'X', 1, 0)
+`7` <- ifelse(bmw_clean$model_series == 7, 1, 0)
+
+#add columnns to bmw_clean data set
+bmw_clean$`1` = `1`
+bmw_clean$M = M
+bmw_clean$`4` = `4`
+bmw_clean$Z = Z
+bmw_clean$`2` = `2`
+bmw_clean$`6` = `6`
+bmw_clean$i = i
+bmw_clean$`5` = `5`
+bmw_clean$X = X
+bmw_clean$`7` = `7`
+
 ```
-```{r diagnostics}
-par(mfrow = c(2,2))
-plot(model)
-```
 
 
+2.
 
-``` {r scatterplot}
+```{r correlation_heatmap}
+# creating correlation matrix
+bmw_heatmap <- subset(bmw_clean, select = c("price", "mileage", "engine_power", "age", "is_new_energy", "is_common_color", "feature_1","feature_2","feature_3","feature_4","feature_5","feature_6", "feature_7","feature_8"))
+
+corr_mat <- round(cor(bmw_heatmap),2)
+ 
+# reduce the size of correlation matrix
+melted_corr_mat <- melt(corr_mat)
+head(melted_corr_mat)
+ 
+# plotting the correlation heatmap
+ggplot(data = melted_corr_mat, aes(x=Var1, y=Var2, fill=value)) + geom_tile() + scale_fill_gradient2(low = "#075AFF", mid="#FFFFCC", high="#FF0000") + geom_text(aes(Var2, Var1, label = value), color = "black", size = 2) + scale_x_discrete(guide = guide_axis(n.dodge=3))
+``` 
+
+3.  
+
+```{r scatterplot}
 attach(bmw_clean)
-data <- data.frame(price, mileage, engine_power, feature_1, feature_2, feature_3, feature_4, feature_6, feature_8)
+data <- data.frame(price, mileage, engine_power, age, diesel, petrol, hybrid_petrol, M, Z, X, i, is_common_color)
 ggpairs(data, upper = list(continuous = wrap("points", alpha = 0.3,    size=0.1)),
 lower = list(continuous = wrap('cor', size = 4)))
 detach(bmw_clean)
+```
+
+```{r stepwise_AIC}
+library(leaps)
+#full model
+full_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 +  feature_4 + feature_6 + feature_8, data = bmw_clean)
+
+#best model using stepwise AIC
+best_mod <- stepAIC(full_mod, direction = "both", trace = FALSE)
+summary(best_mod)
+
+#comparing AIC of all models
+aic <- ols_step_both_aic(full_mod)
+plot(aic)
+
+#alternative graph
+#all possible models in forward selection
+eleven_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 + feature_4 + feature_6 + feature_8, data = bmw_clean)
+ten_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 + feature_4 + feature_6, data = bmw_clean)
+nine_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 + feature_4, data = bmw_clean)
+eight_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3, data = bmw_clean)
+seven_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2, data = bmw_clean)
+six_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1, data = bmw_clean)
+five_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color, data = bmw_clean)
+four_mod <- lm(price ~ mileage + engine_power + age + is_new_energy, data = bmw_clean)
+three_mod <- lm(price ~ mileage + engine_power + age, data = bmw_clean)
+two_mod <- lm(price ~ mileage + engine_power, data = bmw_clean)
+one_mod <- lm(price ~ mileage, data = bmw_clean)
+
+models <- list(
+  "Eleven Predictors" = eleven_mod,
+  "Ten Predictors" = ten_mod,
+  "Nine Predictors" = nine_mod,
+  "Eght Predictors" = eight_mod,
+  "Seven Predictors" = seven_mod,
+  "Six Predictors" = six_mod,
+  "Five Predictors" = five_mod,
+  "Four Predictors" = four_mod,
+  "Three Predictors" = three_mod,
+  "Two Predictors" = two_mod,
+  "One Predictors" = one_mod
+)
+
+
+modelsummary(models, output = "kableExtra")
+```
+
+```{r stepwise_Mallows}
+fwd <- leaps::regsubsets(price ~ mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 +  feature_4 + feature_6 + feature_8,
+                         data = bmw_clean, 
+                         method = "forward",
+                         nvmax = 11)
+summary(fwd)$which
+(b <- which.min(summary(fwd)$cp))
+# b = 11, so a model with 11 variables has lowest Mallow's CP and is therefore the best model
+#best model according to to CP and forward selection
+colnames(summary(fwd)$which)[summary(fwd)$which[b,]]
+#best overall model confirms that best model from stepwise AIC is correct
+best_model <- (lm(price ~ mileage + engine_power + age + is_new_energy + is_common_color, bmw_clean))
+summary(best_model)
+```
+
+```{r Mallows_plot}
+
+predictors <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+cp <- as.data.frame(summary(fwd)$cp)
+cp$num_predictors = predictors
+
+#bar graph
+cp %>% ggplot(aes(x = num_predictors, y = summary(fwd)$cp)) + 
+  geom_bar(stat = "identity", color = "#1974D2", fill = "white") + 
+  scale_x_continuous(n.breaks = 11) +
+  geom_text(aes(label = round(summary(fwd)$cp, 2), vjust = -0.25)) +
+  labs(title = "Mallow's CP for Each Stepwise Model", x = "Number of Predictors", y = "Mallow's CP")
+
+
+```
+
+
+```{r MLR}
+summary(best_mod)
+```
+
+
+5.
+```{r standard_resid}
+#standard residuals
+bmw.lm <- lm(price~mileage + engine_power + age + is_new_energy + is_common_color + feature_1 + feature_2 + feature_3 + feature_4 + feature_6 + feature_8, data = bmw_clean)
+bmw_stdres <- rstandard(bmw.lm)
+#add fitted values column to data set
+bmw_fitted <- cbind(bmw_clean, fitted = fitted(bmw.lm))
+#standard residuals plot
+ggplot(bmw_fitted, aes(x = fitted, y = bmw_stdres, color=bmw_stdres)) + 
+  geom_point(size = 0.2, alpha =0.2) + 
+  labs(title = "BMW Prices",color = "Standard RSS") +
+  ylab("Standardized Residuals") + xlab("Fitted Values") + 
+  geom_hline(yintercept=-2, color = "blue") +
+  geom_hline(yintercept=2, color = "blue")
+
+#residuals
+bmw_res <- resid(bmw.lm)
+#residuals vs fitted plot
+ggplot(bmw_fitted, aes(x = fitted, y = bmw_res, color=bmw_res)) + 
+  geom_point(size = 0.2, alpha =0.2) + 
+  labs(title = "BMW Prices",color = "RSS") +
+  ylab("Residuals") + xlab("Fitted Values") + 
+  geom_hline(yintercept=0, color = "blue")
+
+#standard residual plot and residual plot vs fitted are both the same
 ```
