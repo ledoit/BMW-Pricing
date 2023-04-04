@@ -24,6 +24,8 @@ library(olsrr)
 library(modelsummary)
 library(car)
 library(patchwork)
+library(MASS)
+library(VGAM)
 
 bmw <- as_tibble(read.csv("~/Desktop/MA_575/Project/BMWpricing.csv", comment.char="#")) 
 ```
@@ -79,12 +81,28 @@ bmw_clean$feature_8 <- as.factor(bmw_clean$feature_8)
 bmw_clean$is_common_color <- as.factor(bmw_clean$is_common_color)
 bmw_clean$is_new_energy <- as.factor(bmw_clean$is_new_energy)
 
+##Categorical Variable for number of seats
+bmw_clean$numSeats = NA
+for(i in 1:length(bmw_clean$car_type)){
+  if(bmw_clean$car_type[i] %in% c("convertible", "coupe")){
+    bmw_clean$numSeats[i] = '1'
+  }
+  if(bmw_clean$car_type[i] %in% c("estate", "hatchback", "sedan", "subcompact", "suv")){
+    bmw_clean$numSeats[i] = '2'
+  }
+  if(bmw_clean$car_type[i] %in%  c("van")){
+    bmw_clean$numSeats[i] = '3'
+  }
+}
+
 #pivot the categorical values
 bmw_clean <- bmw_clean %>% 
   pivot_wider(names_from = paint_color, values_from = test1,values_fill = 0 ) %>% 
   pivot_wider(names_from = fuel, values_from = test2, values_fill = 0 ) %>%
   pivot_wider(names_from = car_type, values_from = test3, values_fill = 0 ) 
 # pivot_wider(names_from = model_letter, values_from = test4, values_fill = 0 )
+
+
 ```
 
 ```{r model_series_dummy}
@@ -117,6 +135,7 @@ bmw_clean$`7` = `7`
 
 ```{r training}
 #randomize rows
+set.seed(1)
 bmw_clean = bmw_clean[sample(nrow(bmw_clean)),]
 
 #training and validation subsets
@@ -127,7 +146,7 @@ validation <- bmw_clean[2420:4838,]
 ```{r}
 attach(training)
 cont_data <- data.frame(price, mileage, engine_power, age)
-cat_data <- data.frame(price, is_new_energy, is_common_color, feature_1, feature_2, feature_3, feature_4, feature_5, feature_6, feature_7, feature_8)
+cat_data <- data.frame(price, is_new_energy, is_common_color, numSeats, feature_1, feature_2, feature_3, feature_4, feature_5, feature_6, feature_7, feature_8)
 
 ggpairs(cont_data, upper = list(continuous = wrap("points", alpha = 0.3, size=0.05)),
         lower = list(continuous = wrap('cor', size = 4)))
@@ -135,6 +154,7 @@ ggpairs(cont_data, upper = list(continuous = wrap("points", alpha = 0.3, size=0.
 par(mfrow=c(2, 5))
 boxplot(price~is_new_energy)
 boxplot(price~is_common_color)
+boxplot(price~numSeats)
 boxplot(price~feature_1)
 boxplot(price~feature_2)
 boxplot(price~feature_3)
@@ -150,6 +170,8 @@ detach(training)
 #comparing means of levels of categorical variables
 en_diff <- abs(with(training, tapply(price, is_new_energy, mean))[1] - with(training, tapply(price, is_new_energy, mean))[2])
 col_diff <- abs(with(training, tapply(price, is_common_color, mean))[1] - with(training, tapply(price, is_common_color, mean))[2])
+#for seats, we took difference between mean price of 1 and 3 which gave biggest difference
+seats_diff <- abs(with(training, tapply(price, numSeats, mean))[1] - with(training, tapply(price, numSeats, mean))[3])
 f1_diff <- abs(with(training, tapply(price, feature_1, mean))[1] - with(training, tapply(price, feature_1, mean))[2])
 f2_diff <- abs(with(training, tapply(price, feature_2, mean))[1] - with(training, tapply(price, feature_2, mean))[2])
 f3_diff <- abs(with(training, tapply(price, feature_3, mean))[1] - with(training, tapply(price, feature_3, mean))[2])
@@ -159,17 +181,34 @@ f6_diff <- abs(with(training, tapply(price, feature_6, mean))[1] - with(training
 f7_diff <- abs(with(training, tapply(price, feature_7, mean))[1] - with(training, tapply(price, feature_7, mean))[2])
 f8_diff <- abs(with(training, tapply(price, feature_8, mean))[1] - with(training, tapply(price, feature_8, mean))[2])
 
-df <- data.frame(Predictor = c("is_new_energy", "is_common_color", "feature_1", "feature_2", "feature_3", "feature_4", "feature_5", "feature_6", "feature_7", "feature_8"),
-                 Difference_in_Means = c(en_diff, col_diff, f1_diff, f2_diff, f3_diff, f4_diff, f5_diff, f6_diff, f7_diff, f8_diff))
+df <- data.frame(Predictor = c("is_new_energy", "is_common_color",  "numSeats", "feature_1", "feature_2", "feature_3", "feature_4", "feature_5", "feature_6", "feature_7", "feature_8"),
+                 Difference_in_Means = c(en_diff, col_diff, seats_diff, f1_diff, f2_diff, f3_diff, f4_diff, f5_diff, f6_diff, f7_diff, f8_diff))
 #table that shows difference in mean prices for each categorical variable
 df %>%
   kbl() %>%
   kable_styling(bootstrap_options = "striped") %>% 
   kable_classic_2(full_width = F) %>% 
   row_spec(2, bold = T, color = "white", background = "#D7261E") %>% 
-  row_spec(9, bold = T, color = "white", background = "#D7261E")
+  row_spec(10, bold = T, color = "white", background = "#D7261E")
 #remove is common color and feature 7 from model
 ```
+
+```{r stepwise_AIC}
+library(leaps)
+#full model
+full_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + numSeats + feature_1 + feature_2 + feature_3 +  feature_4 + feature_5 + feature_6 + feature_8, data = training)
+
+#best model using stepwise AIC
+best_mod <- stepAIC(full_mod, direction = "both", trace = FALSE)
+summary(best_mod)
+
+#comparing AIC of all models
+aic <- ols_step_both_aic(full_mod)
+plot(aic)
+
+#the best model is the full model with 12 covariates
+```
+
 
 ```{r}
 #added variable plots
@@ -179,47 +218,53 @@ avPlots(mod, col = "blue", col.lines = "black", lwd = 2)
 
 ```{r}
 #diagnostic plots
-m1 <- lm(price~mileage+engine_power+age+is_new_energy+feature_1+feature_2+feature_3+feature_4+feature_5+feature_6+feature_8, data = training)
 par(mfrow=c(2,2))
-plot(m1)
+plot(best_mod)
 #residual plots are not random, data does not look normal
 
 #plots of standardized residuals against predictors
 par(mfrow=c(2,2))
-StanRes1 <- rstandard(m1)
+StanRes1 <- rstandard(best_mod)
 plot(training$mileage,StanRes1,ylab="Standardized Residuals")
 plot(training$engine_power,StanRes1,ylab="Standardized Residuals")
 plot(training$age,StanRes1,ylab="Standardized Residuals")
-plot(m1$fitted.values,StanRes1,ylab="Standardized Residuals",xlab="Fitted Values")
+plot(best_mod$fitted.values,StanRes1,ylab="Standardized Residuals",xlab="Fitted Values")
 #does not produce random scatter
 ```
 
 ```{r}
 #plot of y vs fitted values
 par(mfrow=c(1,1))
-plot(m1$fitted.values,training$price,xlab="Fitted Values")
+plot(best_mod$fitted.values,training$price,xlab="Fitted Values")
 #produces quadratic rather than linear trend suggesting we consider a transformation on Y
 
 #scatter plot matrix of data
-pairs(price~mileage+engine_power+age)
+pairs(price~mileage+engine_power+age, data = training)
 #response and predictor variables seem skewed suggesting we should also transform predictors
 
 ```
+```{r}
+hats <- as_tibble(hatvalues(best_mod))
+cutoff <- 4/2419
+hats %>% filter(value>cutoff)
+
+```
+
 
 ```{r}
 #inverse response plot to find transformation on Y
-invResPlot(m1)
-#the power curve with a lambda of 0.66 provides closest fit to data, we will round to 0.7
+invResPlot(best_mod)
+#the power curve with a lambda of 0.69 provides closest fit to data, we will round to 0.7
 ```
 
 
 ```{r}
 #new mod
-m2 <- lm(I(price^(0.7))~mileage+engine_power+age+is_new_energy+feature_1+feature_2+feature_3+feature_4+feature_5+feature_6+feature_8, data = training)
+m2 <- lm(I(price^(0.7))~mileage+I(mileage^(2))+engine_power+age+I(age^(2))+is_new_energy+numSeats+feature_1+feature_2+feature_3+feature_4+feature_5+feature_6+feature_8, data = training)
 
 #plot of y vs fitted values
 par(mfrow=c(1,1))
-plot(m2$fitted.values,training$price^(0.6),xlab="Fitted Values")
+plot(m2$fitted.values,training$price^(0.7),xlab="Fitted Values")
 
 #diagnostics
 par(mfrow=c(2,2))
@@ -234,6 +279,6 @@ plot(training$age,StanRes2,ylab="Standardized Residuals")
 plot(m2$fitted.values,StanRes2,ylab="Standardized Residuals",xlab="Fitted Values")
 
 #scatter plot matrix of data
-pairs(I(price^(0.6))~mileage+engine_power+age)
+pairs(I(price^(0.7))~mileage+engine_power+age, data = training)
 ```
 
