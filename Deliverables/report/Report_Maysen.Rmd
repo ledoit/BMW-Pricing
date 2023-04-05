@@ -253,12 +253,6 @@ pairs(price~mileage+engine_power+age,data = bmw_clean)
 #response and predictor variables seem skewed suggesting we should also transform predictors
 
 ```
-```{r}
-hats <- as_tibble(hatvalues(best_mod))
-cutoff <- 4/2419
-hats %>% filter(value>cutoff)
-
-```
 
 
 ```{r}
@@ -270,11 +264,11 @@ invResPlot(best_mod)
 
 ```{r}
 #new mod
-m2 <- lm(I(price^(0.7))~mileage+I(mileage^(2))+engine_power+age+I(age^(2))+is_new_energy+numSeats+feature_1+feature_2+feature_3+feature_4+feature_5+feature_6+feature_8, data = training)
+m2 <- lm(log(price)~log(mileage)+engine_power+log(age)+I(age^2)+is_new_energy+numSeats+feature_1+feature_2+feature_3+feature_4+feature_5+feature_6+feature_8, data = training)
 
 #plot of y vs fitted values
 par(mfrow=c(1,1))
-plot(m2$fitted.values,training$price^(0.7),xlab="Fitted Values")
+plot(m2$fitted.values,log(training$price),xlab="Fitted Values")
 
 #diagnostics
 par(mfrow=c(2,2))
@@ -298,4 +292,41 @@ pairs(I(price^(0.6))~mileage+engine_power+age, data = bmw_clean)
 #pairs(I(price^(0.6))~mileage+engine_power+age)
 
 ```
+```{r}
+# Validation --------------------------------------------------------------------------------------
 
+# Residuals for training data
+ResMLS <- resid(m2)
+
+# Mean Square Error for training data
+mean((ResMLS)^2)
+```
+```{r}
+# Mean Square Error for validation data
+
+output<-predict(m2, se.fit = TRUE,
+                newdata=data.frame(mileage=validation$mileage,
+                engine_power=validation$engine_power,
+                age=validation$age,
+                is_new_energy=validation$is_new_energy,
+                numSeats=validation$numSeats,
+                feature_1=validation$feature_1,
+                feature_2=validation$feature_2,
+                feature_3=validation$feature_3,
+                feature_4=validation$feature_4,
+                feature_5=validation$feature_5,
+                feature_6=validation$feature_6,
+                feature_8=validation$feature_8))
+
+ResMLSValidation <- log(validation$price) - output$fit
+
+mean((ResMLSValidation)^2)
+
+#MSE for validation is very close to MSE of training data
+```
+
+
+```{r}
+# Relative Mean Square Error for validation data
+mean((ResMLSValidation)^2) / mean((log(validation$price))^2)
+```
