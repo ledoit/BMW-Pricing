@@ -27,7 +27,9 @@ library(patchwork)
 library(MASS)
 library(VGAM)
 
-bmw <- as_tibble(read.csv("~/Desktop/MA_575/Project/BMWpricing.csv", comment.char="#")) 
+#bmw <- as_tibble(read.csv("~/Desktop/MA_575/Project/BMWpricing.csv", comment.char="#")) 
+bmw <- as_tibble(read.csv("../../BMWpricing.csv", comment.char="#")) 
+
 ```
 
 
@@ -239,7 +241,15 @@ plot(best_mod$fitted.values,training$price,xlab="Fitted Values")
 #produces quadratic rather than linear trend suggesting we consider a transformation on Y
 
 #scatter plot matrix of data
+
 pairs(price~mileage+engine_power+age, data = training)
+
+
+pairs(price~mileage+engine_power+age,data = bmw_clean)
+
+#pairs(price~mileage+engine_power+age)
+
+
 #response and predictor variables seem skewed suggesting we should also transform predictors
 
 ```
@@ -273,7 +283,14 @@ plot(training$age,StanRes2,ylab="Standardized Residuals")
 plot(m2$fitted.values,StanRes2,ylab="Standardized Residuals",xlab="Fitted Values")
 
 #scatter plot matrix of data
+
 pairs(I(price^(0.7))~mileage+engine_power+age, data = training)
+
+
+pairs(I(price^(0.6))~mileage+engine_power+age, data = bmw_clean)
+
+#pairs(I(price^(0.6))~mileage+engine_power+age)
+
 ```
 ```{r}
 # Validation --------------------------------------------------------------------------------------
