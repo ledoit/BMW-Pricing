@@ -1,0 +1,46 @@
+---
+title: "report——Jacque"
+author: "Jacqueline"
+date: "2023-04-05"
+output: html_document
+---
+```{r}
+#import
+library(tidyverse)
+library(ggplot2)
+library(dplyr)
+library(MASS)
+```
+
+```{r}
+bmw_clean <- as_tibble(read.csv("../../bmw_clean.csv", comment.char="#"))
+head(bmw_clean)
+```
+
+```{r}
+#cont_data <- c('price', 'mileage', 'engine_power', 'age')
+#cat_data <- c('price', 'is_new_energy', 'is_common_color', 'feature_1', 'feature_2', 'feature_3', 'feature_4', 'feature_5', 'feature_6', 'feature_7', 'feature_8')
+attach(bmw_clean)
+cont_data <- data.frame((price)^0.45, mileage, sqrt(engine_power), log(age))
+cat_data <- data.frame(price, is_new_energy, is_common_color, feature_1, feature_2, feature_3, feature_4, feature_5, feature_6, feature_7, feature_8)
+
+ggpairs(cont_data, upper = list(continuous = wrap("points", alpha = 0.3, size=0.05)),
+        lower = list(continuous = wrap('cor', size = 4)))
+
+```
+
+```{r}
+#price
+bc.price = boxcox(price~1,lambda = seq(-3,3))
+lambda_price = bc.price$x[which(bc.price$y == max(bc.price$y))]
+bc.mileage = boxcox(mileage~1,lambda = seq(-3,3))
+lambda_mileage = bc.mileage$x[which(bc.mileage$y == max(bc.mileage$y))]
+bc.engine_power = boxcox(engine_power~1,lambda = seq(-3,3))
+lambda_engine_power = bc.engine_power$x[which(bc.engine_power$y == max(bc.engine_power$y))]
+bc.age= boxcox(age~1,lambda = seq(-3,3))
+lambda_age = bc.age$x[which(bc.age$y == max(bc.age$y))]
+```
+```{r}
+min(engine_power)
+```
+
