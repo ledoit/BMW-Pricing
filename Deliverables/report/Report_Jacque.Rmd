@@ -10,6 +10,7 @@ library(tidyverse)
 library(ggplot2)
 library(dplyr)
 library(MASS)
+library(GGally)
 ```
 
 ```{r}
@@ -17,30 +18,42 @@ bmw_clean <- as_tibble(read.csv("../../bmw_clean.csv", comment.char="#"))
 head(bmw_clean)
 ```
 
-```{r}
-#cont_data <- c('price', 'mileage', 'engine_power', 'age')
-#cat_data <- c('price', 'is_new_energy', 'is_common_color', 'feature_1', 'feature_2', 'feature_3', 'feature_4', 'feature_5', 'feature_6', 'feature_7', 'feature_8')
-attach(bmw_clean)
-cont_data <- data.frame((price)^0.45, mileage, sqrt(engine_power), log(age))
-cat_data <- data.frame(price, is_new_energy, is_common_color, feature_1, feature_2, feature_3, feature_4, feature_5, feature_6, feature_7, feature_8)
 
-ggpairs(cont_data, upper = list(continuous = wrap("points", alpha = 0.3, size=0.05)),
+```{r}
+attach(bmw_clean)
+#price
+bc.price = boxcox(price~1,lambda = seq(-3,3))
+lambda_price = bc.price$x[which(bc.price$y == max(bc.price$y))]
+#mileage 
+bc.mileage = boxcox(mileage~1,lambda = seq(-3,3))
+lambda_mileage = bc.mileage$x[which(bc.mileage$y == max(bc.mileage$y))]
+#engine power
+bc.engine_power = boxcox((engine_power+1)~1,lambda = seq(-3,3))
+lambda_engine_power = bc.engine_power$x[which(bc.engine_power$y == max(bc.engine_power$y))]
+#age
+bc.age= boxcox(age~1,lambda = seq(-3,3))
+lambda_age = bc.age$x[which(bc.age$y == max(bc.age$y))]
+```
+
+```{r}
+
+cont_data <- data.frame((price)^lambda_price, mileage^lambda_mileage, (engine_power+1)^lambda_engine_power, age^lambda_age)
+cat_data <- data.frame(is_new_energy, is_common_color, feature_1, feature_2, feature_3, feature_4, feature_5, feature_6, feature_7, feature_8)
+
+ggpairs(cont_data, upper = list(continuous = wrap("points", alpha = 0.3, size=0.05)), 
         lower = list(continuous = wrap('cor', size = 4)))
 
 ```
 
 ```{r}
-#price
-bc.price = boxcox(price~1,lambda = seq(-3,3))
-lambda_price = bc.price$x[which(bc.price$y == max(bc.price$y))]
-bc.mileage = boxcox(mileage~1,lambda = seq(-3,3))
-lambda_mileage = bc.mileage$x[which(bc.mileage$y == max(bc.mileage$y))]
-bc.engine_power = boxcox(engine_power~1,lambda = seq(-3,3))
-lambda_engine_power = bc.engine_power$x[which(bc.engine_power$y == max(bc.engine_power$y))]
-bc.age= boxcox(age~1,lambda = seq(-3,3))
-lambda_age = bc.age$x[which(bc.age$y == max(bc.age$y))]
+# fit in the full model
+lm_full <- lm(I(price^lambda_price) ~ I(mileage^lambda_mileage) + I((engine_power+1)^lambda_engine_power) + I(age^lambda_age) + is_new_energy + is_common_color+ feature_1+ feature_2+ feature_3+feature_4+ feature_5+ feature_6+feature_7+ feature_8, data = bmw_clean)
 ```
+
 ```{r}
-min(engine_power)
+bc.full = boxcox(lm_full,lambda = seq(-3,3))
+lambda_full = bc.full$x[which(bc.full$y == max(bc.full$y))]
+#Therefore the most normalized model should be  (I is a format that allows exponent exsits idk why the original way doesnt work)
+lm_norm <- lm(I(price^(lambda_price*lambda_full)) ~ I(mileage^lambda_mileage) + I((engine_power+1)^lambda_engine_power) + I(age^lambda_age) + is_new_energy + is_common_color+ feature_1+ feature_2+ feature_3+feature_4+ feature_5+ feature_6+feature_7+ feature_8, data = bmw_clean)
 ```
 
