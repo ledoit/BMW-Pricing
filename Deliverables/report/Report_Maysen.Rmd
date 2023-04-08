@@ -26,6 +26,7 @@ library(car)
 library(patchwork)
 library(MASS)
 library(VGAM)
+library(lmtest)
 
 #bmw <- as_tibble(read.csv("~/Desktop/MA_575/Project/BMWpricing.csv", comment.char="#")) 
 bmw <- as_tibble(read.csv("../../BMWpricing.csv", comment.char="#")) 
@@ -210,19 +211,20 @@ plot(aic)
 
 #the best model is the full model with 12 covariates
 ```
-
-
 ```{r}
-#added variable plots
-mod <- lm(price~mileage+engine_power+age, data = training)
-avPlots(mod, col = "blue", col.lines = "black", lwd = 2)
+#VIF for multicollinearity
+vif(full_mod)
+#no multicollinearity between covariates (no VIF>5)
 ```
+
 
 ```{r}
 #diagnostic plots
 par(mfrow=c(2,2))
 plot(best_mod)
 #residual plots are not random, data does not look normal
+
+
 
 #plots of standardized residuals against predictors
 par(mfrow=c(2,2))
@@ -240,71 +242,92 @@ par(mfrow=c(1,1))
 plot(best_mod$fitted.values,training$price,xlab="Fitted Values")
 #produces quadratic rather than linear trend suggesting we consider a transformation on Y
 
+#plot of y vs fitted values
+par(mfrow=c(1,1))
+plot(best_mod$fitted.values,training$price,xlab="Fitted Values")
+#not linear, more exponential pattern
+
 #scatter plot matrix of data
-
 pairs(price~mileage+engine_power+age, data = training)
-
-
-pairs(price~mileage+engine_power+age,data = bmw_clean)
-
-#pairs(price~mileage+engine_power+age)
-
 
 #response and predictor variables seem skewed suggesting we should also transform predictors
 
 ```
 
-
 ```{r}
-#inverse response plot to find transformation on Y
-invResPlot(best_mod)
-#the power curve with a lambda of 0.69 provides closest fit to data, we will round to 0.7
+attach(training)
+#price
+bc.price = boxcox(price~1,lambda = seq(-3,3))
+lambda_price = bc.price$x[which(bc.price$y == max(bc.price$y))]
+#mileage 
+bc.mileage = boxcox(mileage~1,lambda = seq(-3,3))
+lambda_mileage = bc.mileage$x[which(bc.mileage$y == max(bc.mileage$y))]
+#engine power
+bc.engine_power = boxcox((engine_power+1)~1,lambda = seq(-3,3))
+lambda_engine_power = bc.engine_power$x[which(bc.engine_power$y == max(bc.engine_power$y))]
+#age
+bc.age= boxcox(age~1,lambda = seq(-3,3))
+lambda_age = bc.age$x[which(bc.age$y == max(bc.age$y))]
 ```
 
+```{r}
+# fit in the full model
+lm_full <- lm(I(price^lambda_price) ~ I(mileage^lambda_mileage) + I((engine_power+1)^lambda_engine_power) + I(age^lambda_age) + is_new_energy + feature_1+ feature_2+ feature_3+feature_4+ feature_5+ feature_6+ feature_8, data = training)
+```
 
 ```{r}
-#new mod
-m2 <- lm(log(price)~log(mileage)+engine_power+log(age)+I(age^2)+is_new_energy+numSeats+feature_1+feature_2+feature_3+feature_4+feature_5+feature_6+feature_8, data = training)
+bc.full = boxcox(lm_full,lambda = seq(-3,3))
+lambda_full = bc.full$x[which(bc.full$y == max(bc.full$y))]
+#Therefore the most normalized model should be  (I is a format that allows exponent exsits idk why the original way doesnt work)
+lm_norm <- lm(I(price^(lambda_price*lambda_full)) ~ I(mileage^lambda_mileage) + I((engine_power+1)^lambda_engine_power) + I(age^lambda_age) + is_new_energy + feature_1+ feature_2+ feature_3+feature_4+ feature_5+ feature_6+ feature_8, data = training)
+```
+
+```{r}
+#diagnostics on final transformed model
+par(mfrow=c(2,2))
+plot(lm_norm)
+#residual plots look better, qq plot still questionable
 
 #plot of y vs fitted values
 par(mfrow=c(1,1))
-plot(m2$fitted.values,log(training$price),xlab="Fitted Values")
-
-#diagnostics
-par(mfrow=c(2,2))
-plot(m2)
+plot(lm_norm$fitted.values,I(price^(lambda_price*lambda_full)),xlab="Fitted Values")
+#more linear pattern compared to exponential patttern before
 
 #plots of standardized residuals against predictors
 par(mfrow=c(2,2))
-StanRes2 <- rstandard(m2)
-plot(training$mileage,StanRes2,ylab="Standardized Residuals")
-plot(training$engine_power,StanRes2,ylab="Standardized Residuals")
-plot(training$age,StanRes2,ylab="Standardized Residuals")
-plot(m2$fitted.values,StanRes2,ylab="Standardized Residuals",xlab="Fitted Values")
+stres <- rstandard(lm_norm)
+plot(I(mileage^lambda_mileage),stres,ylab="Standardized Residuals")
+plot(I((engine_power+1)^lambda_engine_power),stres,ylab="Standardized Residuals")
+plot(I(age^lambda_age),stres,ylab="Standardized Residuals")
+plot(lm_norm$fitted.values,stres,ylab="Standardized Residuals",xlab="Fitted Values")
+#more random than plots of standard residuals against non transformed variables
 
-#scatter plot matrix of data
+#scatterplot matrix of price against transformed continuous variables 
+pairs(I(price^(lambda_price*lambda_full))~I(mileage^lambda_mileage)+I((engine_power+1)^lambda_engine_power)+I(age^lambda_age), data = training)
+#more clear linear relationship between transformed response and transformed predictors, no more exponential/quadratic pattern
 
-pairs(I(price^(0.7))~mileage+engine_power+age, data = training)
-
-
-pairs(I(price^(0.6))~mileage+engine_power+age, data = bmw_clean)
-
-#pairs(I(price^(0.6))~mileage+engine_power+age)
+#check multicollinearity
+vif(lm_norm)
+#no multicollinearity
 
 ```
+
+
+
 ```{r}
 # Validation --------------------------------------------------------------------------------------
 
 # Residuals for training data
-ResMLS <- resid(m2)
+ResMLS <- resid(lm_norm)
 
 # Mean Square Error for training data
 mean((ResMLS)^2)
 ```
+
 ```{r}
 # Mean Square Error for validation data
 
-output<-predict(m2, se.fit = TRUE,
+output<-predict(lm_norm, se.fit = TRUE,
                 newdata=data.frame(mileage=validation$mileage,
                 engine_power=validation$engine_power,
                 age=validation$age,
@@ -318,11 +341,10 @@ output<-predict(m2, se.fit = TRUE,
                 feature_6=validation$feature_6,
                 feature_8=validation$feature_8))
 
-ResMLSValidation <- log(validation$price) - output$fit
+ResMLSValidation <- I(price^(lambda_price*lambda_full)) - output$fit
 
 mean((ResMLSValidation)^2)
 
-#MSE for validation is very close to MSE of training data
 ```
 
 
@@ -330,3 +352,4 @@ mean((ResMLSValidation)^2)
 # Relative Mean Square Error for validation data
 mean((ResMLSValidation)^2) / mean((log(validation$price))^2)
 ```
+
