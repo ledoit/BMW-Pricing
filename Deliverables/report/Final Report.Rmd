@@ -1,0 +1,338 @@
+---
+title: "Final Report"
+author: "Maysen Pagan"
+date: "2023-04-08"
+output: pdf_document
+---
+---
+title: "report"
+author: "Maysen Pagan"
+date: "2023-03-29"
+output: pdf_document
+---
+
+Next three r chunks are same as deliverable 3
+```{r setup, include=FALSE}
+library(tidyverse)
+library(ggplot2)
+library(hrbrthemes)
+library(GGally)
+library(kableExtra)
+library(knitr)
+library(car)
+library(dplyr)
+library(plyr)
+library(lubridate)
+library(AICcmodavg)
+library(leaps)
+library(caret)
+library(olsrr)
+library(modelsummary)
+library(car)
+library(patchwork)
+library(MASS)
+library(VGAM)
+library(lmtest)
+
+bmw <- as_tibble(read.csv("~/Desktop/MA_575/Project/BMWpricing.csv", comment.char="#")) 
+#bmw <- as_tibble(read.csv("../../BMWpricing.csv", comment.char="#")) 
+
+```
+
+
+```{r cleaning}
+#remove mileage greater than 1,000,000  and less than 0
+bmw_clean <- bmw %>% filter(mileage<500000 & mileage > 0)
+#remove two cars whose price is >100000?
+bmw_clean <- bmw_clean %>% filter(price<100000)
+#remove the only car whose model_key is "ActiveHybrid 5"
+bmw_clean <- bmw_clean %>%  filter(model_key != "ActiveHybrid 5")
+#change true/false in features to 0/1
+bmw_clean$feature_1 <- as.integer(as.logical(bmw_clean$feature_1))
+bmw_clean$feature_2 <- as.integer(as.logical(bmw_clean$feature_2))
+bmw_clean$feature_3 <- as.integer(as.logical(bmw_clean$feature_3))
+bmw_clean$feature_4 <- as.integer(as.logical(bmw_clean$feature_4))
+bmw_clean$feature_5 <- as.integer(as.logical(bmw_clean$feature_5))
+bmw_clean$feature_6 <- as.integer(as.logical(bmw_clean$feature_6))
+bmw_clean$feature_7 <- as.integer(as.logical(bmw_clean$feature_7))
+bmw_clean$feature_8 <- as.integer(as.logical(bmw_clean$feature_8))
+#separate registration date column into month, day, and year
+bmw_clean[c('month', 'day', 'year')] <- str_split_fixed(bmw_clean$registration_date, '/', 3)
+#create column "model_letter" containing letter of model_key (if it exists, "none" otherwise)
+bmw_clean <- bmw_clean %>% mutate(model_letter = str_extract(bmw_clean$model_key, "^[A-Za-z]"))
+bmw_clean$model_letter <- replace_na(bmw_clean$model_letter, "none")
+#add age variable
+bmw_clean$age <- as.numeric(difftime(as.Date(bmw_clean$sold_at,"%m/%d/%Y"),as.Date(bmw_clean$registration_date,"%m/%d/%Y"))/365)
+# define common/uncommon colors
+common_color <- c("black","grey","white","silver")
+uncommon_color <-c("red", "blue","orange","beige","brown","green")
+new_energy <- c("hybrid_petrol", "electro")
+not_new_energy <- c("diesel", "petrol")
+bmw_clean <- bmw_clean %>%
+  #create dummy columns
+  mutate(test1 = 1, test2 = 1, test3 = 1, test4 = 1) %>%  
+  #determine common color 
+  mutate(is_common_color = sapply(bmw_clean$paint_color, function(x) x %in% common_color )) %>%
+  #determine electric 
+  mutate(is_new_energy = sapply(bmw_clean$fuel, function(x) x %in% new_energy )) %>%
+  # extract model series 
+  mutate(model_series = substr(model_key, 1,1))
+
+#turn logical into numeric 
+bmw_clean$feature_1 <- as.factor(bmw_clean$feature_1)
+bmw_clean$feature_2 <- as.factor(bmw_clean$feature_2)
+bmw_clean$feature_3 <- as.factor(bmw_clean$feature_3)
+bmw_clean$feature_4 <- as.factor(bmw_clean$feature_4)
+bmw_clean$feature_5 <- as.factor(bmw_clean$feature_5)
+bmw_clean$feature_6 <- as.factor(bmw_clean$feature_6)
+bmw_clean$feature_7 <- as.factor(bmw_clean$feature_7)
+bmw_clean$feature_8 <- as.factor(bmw_clean$feature_8)
+bmw_clean$is_common_color <- as.factor(bmw_clean$is_common_color)
+bmw_clean$is_new_energy <- as.factor(bmw_clean$is_new_energy)
+
+##Categorical Variable for number of seats
+bmw_clean$numSeats = NA
+for(i in 1:length(bmw_clean$car_type)){
+  if(bmw_clean$car_type[i] %in% c("convertible", "coupe")){
+    bmw_clean$numSeats[i] = '1'
+  }
+  if(bmw_clean$car_type[i] %in% c("estate", "hatchback", "sedan", "subcompact", "suv")){
+    bmw_clean$numSeats[i] = '2'
+  }
+  if(bmw_clean$car_type[i] %in%  c("van")){
+    bmw_clean$numSeats[i] = '3'
+  }
+}
+
+#pivot the categorical values
+bmw_clean <- bmw_clean %>% 
+  pivot_wider(names_from = paint_color, values_from = test1,values_fill = 0 ) %>% 
+  pivot_wider(names_from = fuel, values_from = test2, values_fill = 0 ) %>%
+  pivot_wider(names_from = car_type, values_from = test3, values_fill = 0 ) 
+# pivot_wider(names_from = model_letter, values_from = test4, values_fill = 0 )
+
+
+```
+
+```{r model_series_dummy}
+
+#create dummy variables
+`1` <- ifelse(bmw_clean$model_series == 1, 1, 0)
+M <- ifelse(bmw_clean$model_series == 'M', 1, 0)
+`4` <- ifelse(bmw_clean$model_series == 4, 1, 0)
+Z <- ifelse(bmw_clean$model_series == 'Z', 1, 0)
+`2` <- ifelse(bmw_clean$model_series == 2, 1, 0)
+`6` <- ifelse(bmw_clean$model_series == 6, 1, 0)
+i <- ifelse(bmw_clean$model_series == 'i', 1, 0)
+`5` <- ifelse(bmw_clean$model_series == 5, 1, 0)
+X <- ifelse(bmw_clean$model_series == 'X', 1, 0)
+`7` <- ifelse(bmw_clean$model_series == 7, 1, 0)
+
+#add columnns to bmw_clean data set
+bmw_clean$`1` = `1`
+bmw_clean$M = M
+bmw_clean$`4` = `4`
+bmw_clean$Z = Z
+bmw_clean$`2` = `2`
+bmw_clean$`6` = `6`
+bmw_clean$i = i
+bmw_clean$`5` = `5`
+bmw_clean$X = X
+bmw_clean$`7` = `7`
+```
+
+
+```{r training}
+#randomize rows
+set.seed(1)
+bmw_clean = bmw_clean[sample(nrow(bmw_clean)),]
+
+#training and validation subsets
+training <- bmw_clean[1:2419,]
+validation <- bmw_clean[2420:4838,]
+```
+
+```{r}
+attach(training)
+cont_data <- data.frame(price, mileage, engine_power, age)
+cat_data <- data.frame(price, is_new_energy, is_common_color, numSeats, feature_1, feature_2, feature_3, feature_4, feature_5, feature_6, feature_7, feature_8)
+
+ggpairs(cont_data, upper = list(continuous = wrap("points", alpha = 0.3, size=0.05)),
+        lower = list(continuous = wrap('cor', size = 4)))
+
+par(mfrow=c(2, 5))
+boxplot(price~is_new_energy)
+boxplot(price~is_common_color)
+boxplot(price~numSeats)
+boxplot(price~feature_1)
+boxplot(price~feature_2)
+boxplot(price~feature_3)
+boxplot(price~feature_4)
+boxplot(price~feature_5)
+boxplot(price~feature_6)
+boxplot(price~feature_7)
+boxplot(price~feature_8)
+detach(training)
+```
+
+```{r}
+#comparing means of levels of categorical variables
+en_diff <- abs(with(training, tapply(price, is_new_energy, mean))[1] - with(training, tapply(price, is_new_energy, mean))[2])
+col_diff <- abs(with(training, tapply(price, is_common_color, mean))[1] - with(training, tapply(price, is_common_color, mean))[2])
+#for seats, we took difference between mean price of 1 and 3 which gave biggest difference
+seats_diff <- abs(with(training, tapply(price, numSeats, mean))[1] - with(training, tapply(price, numSeats, mean))[3])
+f1_diff <- abs(with(training, tapply(price, feature_1, mean))[1] - with(training, tapply(price, feature_1, mean))[2])
+f2_diff <- abs(with(training, tapply(price, feature_2, mean))[1] - with(training, tapply(price, feature_2, mean))[2])
+f3_diff <- abs(with(training, tapply(price, feature_3, mean))[1] - with(training, tapply(price, feature_3, mean))[2])
+f4_diff <- abs(with(training, tapply(price, feature_4, mean))[1] - with(training, tapply(price, feature_4, mean))[2])
+f5_diff <- abs(with(training, tapply(price, feature_5, mean))[1] - with(training, tapply(price, feature_5, mean))[2])
+f6_diff <- abs(with(training, tapply(price, feature_6, mean))[1] - with(training, tapply(price, feature_6, mean))[2])
+f7_diff <- abs(with(training, tapply(price, feature_7, mean))[1] - with(training, tapply(price, feature_7, mean))[2])
+f8_diff <- abs(with(training, tapply(price, feature_8, mean))[1] - with(training, tapply(price, feature_8, mean))[2])
+
+df <- data.frame(Predictor = c("is_new_energy", "is_common_color",  "numSeats", "feature_1", "feature_2", "feature_3", "feature_4", "feature_5", "feature_6", "feature_7", "feature_8"),
+                 Difference_in_Means = c(en_diff, col_diff, seats_diff, f1_diff, f2_diff, f3_diff, f4_diff, f5_diff, f6_diff, f7_diff, f8_diff))
+#table that shows difference in mean prices for each categorical variable
+df %>%
+  kbl() %>%
+  kable_styling(bootstrap_options = "striped") %>% 
+  kable_classic_2(full_width = F) %>% 
+  row_spec(2, bold = T, color = "white", background = "#D7261E") %>% 
+  row_spec(10, bold = T, color = "white", background = "#D7261E")
+#remove is common color and feature 7 from model
+```
+
+```{r stepwise_AIC}
+library(leaps)
+#full model
+full_mod <- lm(price ~ mileage + engine_power + age + is_new_energy + numSeats + feature_1 + feature_2 + feature_3 +  feature_4 + feature_5 + feature_6 + feature_8, data = training)
+
+#best model using stepwise AIC
+best_mod <- stepAIC(full_mod, direction = "both", trace = FALSE)
+summary(best_mod)
+
+#comparing AIC of all models
+aic <- ols_step_both_aic(full_mod)
+plot(aic)
+
+#the best model is the full model with 12 covariates
+```
+```{r}
+#VIF for multicollinearity
+vif(full_mod)
+#no multicollinearity between covariates (no VIF>5)
+```
+
+
+```{r}
+#diagnostic plots
+par(mfrow=c(2,2))
+plot(best_mod)
+#residual plots are not random, data does not look normal
+
+
+
+#plots of standardized residuals against predictors
+par(mfrow=c(2,2))
+StanRes1 <- rstandard(best_mod)
+plot(training$mileage,StanRes1,ylab="Standardized Residuals")
+plot(training$engine_power,StanRes1,ylab="Standardized Residuals")
+plot(training$age,StanRes1,ylab="Standardized Residuals")
+plot(best_mod$fitted.values,StanRes1,ylab="Standardized Residuals",xlab="Fitted Values")
+#does not produce random scatter
+```
+
+```{r}
+#plot of y vs fitted values
+par(mfrow=c(1,1))
+plot(best_mod$fitted.values,training$price,xlab="Fitted Values")
+#produces quadratic rather than linear trend suggesting we consider a transformation on Y
+
+
+#scatter plot matrix of data
+pairs(price~mileage+engine_power+age, data = training)
+
+#response and predictor variables seem skewed suggesting we should also transform predictors
+
+```
+
+```{r}
+#inverse response plot to find transformation on Y
+invResPlot(best_mod)
+```
+
+```{r}
+new_mod <- lm(log(price) ~ I(mileage^(0.5)) + engine_power + log(age) + I(age^(0.5)) + is_new_energy + numSeats + feature_1 + feature_2 + feature_3 +  feature_4 + feature_5 + feature_6 + feature_8, data = training)
+
+```
+
+
+
+
+```{r}
+#diagnostics on final transformed model
+par(mfrow=c(2,2))
+plot(new_mod)
+#residual plots look better, qq plot still questionable
+
+#plot of y vs fitted values
+par(mfrow=c(1,1))
+plot(new_mod$fitted.values,log(price),xlab="Fitted Values")
+#more linear pattern compared to exponential patttern before
+
+#plots of standardized residuals against predictors
+par(mfrow=c(2,2))
+stres <- rstandard(new_mod)
+plot(I(mileage^(0.5)),stres,ylab="Standardized Residuals")
+plot(engine_power,stres,ylab="Standardized Residuals")
+plot(new_mod$fitted.values,stres,ylab="Standardized Residuals",xlab="Fitted Values")
+#more random than plots of standard residuals against non transformed variables
+
+
+#check multicollinearity
+vif(new_mod)
+#no multicollinearity
+
+```
+
+
+
+```{r}
+# Validation --------------------------------------------------------------------------------------
+
+# Residuals for training data
+ResMLS <- resid(new_mod)
+
+# Mean Square Error for training data
+mean((ResMLS)^2)
+```
+
+```{r}
+# Mean Square Error for validation data
+
+output<-predict(new_mod, se.fit = TRUE,
+                newdata=data.frame(mileage=validation$mileage,
+                engine_power=validation$engine_power,
+                age=validation$age,
+                is_new_energy=validation$is_new_energy,
+                numSeats=validation$numSeats,
+                feature_1=validation$feature_1,
+                feature_2=validation$feature_2,
+                feature_3=validation$feature_3,
+                feature_4=validation$feature_4,
+                feature_5=validation$feature_5,
+                feature_6=validation$feature_6,
+                feature_8=validation$feature_8))
+
+ResMLSValidation <- log(validation$price) - output$fit
+
+mean((ResMLSValidation)^2)
+
+```
+
+
+```{r}
+# Relative Mean Square Error for validation data
+mean((ResMLSValidation)^2) / mean((log(validation$price))^2)
+```
+
