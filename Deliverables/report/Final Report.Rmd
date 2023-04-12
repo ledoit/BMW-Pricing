@@ -157,21 +157,27 @@ attach(training)
 cont_data <- data.frame(price, mileage, engine_power, age)
 cat_data <- data.frame(price, is_new_energy, is_common_color, numSeats, feature_1, feature_2, feature_3, feature_4, feature_5, feature_6, feature_7, feature_8)
 
-ggpairs(cont_data, upper = list(continuous = wrap("points", alpha = 0.3, size=0.05)),
-        lower = list(continuous = wrap('cor', size = 4)))
+ggpairs(cont_data, upper = list(continuous = wrap("points", alpha = 0.2, size=0.1)),
+        lower = list(continuous = wrap('cor', size = 4)),
+        title = "Scatterplot Matrix of Continuous Predictors") + 
+  theme_bw() +
+  labs(caption = "Figure 1. Scatterplot and correlation matrix of the continuous variables from the starting model.")
+  
 
-par(mfrow=c(2, 5))
-boxplot(price~is_new_energy)
-boxplot(price~is_common_color)
-boxplot(price~numSeats)
-boxplot(price~feature_1)
-boxplot(price~feature_2)
-boxplot(price~feature_3)
-boxplot(price~feature_4)
-boxplot(price~feature_5)
-boxplot(price~feature_6)
-boxplot(price~feature_7)
-boxplot(price~feature_8)
+par(mfrow=c(1,4))
+boxplot(price~is_new_energy, notch = T)
+boxplot(price~is_common_color, notch = T)
+boxplot(price~numSeats, notch = T)
+mtext("Figure 2. Notched boxplots of factor variables to compare difference in prices between levels",side=1,line=4.2,cex=0.7)
+boxplot(price~feature_1, notch = T)
+boxplot(price~feature_2, notch = T)
+boxplot(price~feature_3, notch = T)
+boxplot(price~feature_4, notch = T)
+boxplot(price~feature_5, notch = T)
+boxplot(price~feature_6, notch = T) 
+boxplot(price~feature_7, notch = T) 
+boxplot(price~feature_8, notch = T) 
+
 detach(training)
 ```
 
@@ -194,9 +200,9 @@ df <- data.frame(Predictor = c("is_new_energy", "is_common_color",  "numSeats", 
                  Difference_in_Means = c(en_diff, col_diff, seats_diff, f1_diff, f2_diff, f3_diff, f4_diff, f5_diff, f6_diff, f7_diff, f8_diff))
 #table that shows difference in mean prices for each categorical variable
 df %>%
-  kbl() %>%
+  kbl(caption = "Table 1. Difference Between Means of Factor Predictors") %>%
   kable_styling(bootstrap_options = "striped") %>% 
-  kable_classic_2(full_width = F) %>% 
+  kable_classic_2(full_width = F, html_font = "Cambria") %>% 
   row_spec(2, bold = T, color = "white", background = "#D7261E") %>% 
   row_spec(10, bold = T, color = "white", background = "#D7261E")
 #remove is common color and feature 7 from model
@@ -219,7 +225,7 @@ plot(aic)
 ```
 ```{r}
 #VIF for multicollinearity
-vif(full_mod)
+vif(best_mod)
 #no multicollinearity between covariates (no VIF>5)
 ```
 
@@ -230,22 +236,31 @@ par(mfrow=c(2,2))
 plot(best_mod)
 #residual plots are not random, data does not look normal
 
-
+#standard residuals plot
 
 #plots of standardized residuals against predictors
 par(mfrow=c(2,2))
 StanRes1 <- rstandard(best_mod)
-plot(training$mileage,StanRes1,ylab="Standardized Residuals")
-plot(training$engine_power,StanRes1,ylab="Standardized Residuals")
-plot(training$age,StanRes1,ylab="Standardized Residuals")
+plot(training$mileage,StanRes1,ylab="Standardized Residuals", xlab = "Mileage")
+abline(-2,0, col = "blue")
+abline(2,0, col = "blue")
+plot(training$engine_power,StanRes1,ylab="Standardized Residuals", xlab = "Engine Power")
+abline(-2,0, col = "blue")
+abline(2,0, col = "blue")
+plot(training$age,StanRes1,ylab="Standardized Residuals", xlab = "Age")
+abline(-2,0, col = "blue")
+abline(2,0, col = "blue")
 plot(best_mod$fitted.values,StanRes1,ylab="Standardized Residuals",xlab="Fitted Values")
+abline(-2,0, col = "blue")
+abline(2,0, col = "blue")
 #does not produce random scatter
 ```
 
 ```{r}
 #plot of y vs fitted values
 par(mfrow=c(1,1))
-plot(best_mod$fitted.values,training$price,xlab="Fitted Values")
+plot(best_mod$fitted.values,training$price,pch=21,xlab="Fitted Values", ylab = "Price", main = "Y vs. Fitted Values")
+grid()
 #produces quadratic rather than linear trend suggesting we consider a transformation on Y
 
 
@@ -270,6 +285,7 @@ new_mod <- lm(log(price) ~ I(mileage^(0.5)) + engine_power + log(age) + I(age^(0
 
 
 ```{r}
+attach(training)
 #diagnostics on final transformed model
 par(mfrow=c(2,2))
 plot(new_mod)
@@ -277,24 +293,34 @@ plot(new_mod)
 
 #plot of y vs fitted values
 par(mfrow=c(1,1))
-plot(new_mod$fitted.values,log(price),xlab="Fitted Values")
-#more linear pattern compared to exponential patttern before
+plot(new_mod$fitted.values,log(price),xlab="Fitted Values", main = "Y vs. Fitted Values")
+grid()
+#more linear pattern compared to exponential pattern before
 
 #plots of standardized residuals against predictors
 par(mfrow=c(2,2))
 stres <- rstandard(new_mod)
 plot(I(mileage^(0.5)),stres,ylab="Standardized Residuals")
+abline(-2,0, col = "blue")
+abline(2,0, col = "blue")
 plot(engine_power,stres,ylab="Standardized Residuals")
+abline(-2,0, col = "blue")
+abline(2,0, col = "blue")
 plot(new_mod$fitted.values,stres,ylab="Standardized Residuals",xlab="Fitted Values")
+abline(-2,0, col = "blue")
+abline(2,0, col = "blue")
 #more random than plots of standard residuals against non transformed variables
 
 
 #check multicollinearity
 vif(new_mod)
 #no multicollinearity
-
+detach(training)
 ```
-
+```{r}
+avPlots(new_mod, layout = c(2,2), cex = 0.5)
+#added variable plots showing that having adjusted for the effects of the other predictors, the transformed continuous predictors do add to the prediction of log(price)
+```
 
 
 ```{r}
